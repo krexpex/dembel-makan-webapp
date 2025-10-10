@@ -169,11 +169,11 @@ export default function App() {
               href={hasPublic ? WEB_PUBLIC_URL : undefined}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={(e) => { if (!hasPublic) { e.preventDefault(); alert("Вставь ссылку на паблик в WEB_PUBLIC_URL"); } }}
+              onClick={(e) => { if (!hasPublic) { e.preventDefault(); alert("https://t.me/zdem_makana"); } }}
               className="px-4 py-3 rounded-2xl bg-zinc-700 hover:bg-zinc-600 font-medium"
               style={{ pointerEvents: hasPublic ? "auto" : "auto" }}
             >
-              Открыть паблик
+              Ждем Вместе
             </a>
           </div>
         </div>
