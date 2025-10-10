@@ -1,22 +1,16 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import confetti from "canvas-confetti";
 
-/** ── ПРАВИМ ТОЛЬКО ЗДЕСЬ ─────────────────────────────────────────────
- * Жёстко заданные даты службы (локальное время).
- * Поменяешь при необходимости.
- */
-const SERVICE_START = "2025-10-01T00:00:00"; // 1 октября 2025
-const DEMOBIL_DATE  = "2026-10-01T00:00:00"; // 1 октября 2026
-/** ─────────────────────────────────────────────────────────────────── */
+/** ── НАСТРОЙКИ ───────────────────────────────────────────── */
+const NAME = "Макан";                                 // фиксированное имя
+const SERVICE_START = "2025-10-01T00:00:00";          // старт службы (локальное время)
+const DEMOBIL_DATE  = "2026-10-01T00:00:00";          // дембель (локальное время)
+const WEB_PUBLIC_URL = "";                            // ← сюда вставь ссылку на паблик/канал
+/** ───────────────────────────────────────────────────────── */
 
 export default function App() {
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/Riga";
-
-  const NAME = "Макан";
   const [now, setNow] = useState(Date.now());
-  const [compact] = useState(false); // интерфейс без переключателя
-
-  // чтобы конфетти не стреляли бесконечно
   const confettiDoneRef = useRef(false);
 
   useEffect(() => {
@@ -35,25 +29,18 @@ export default function App() {
     } catch {}
   }, []);
 
-  useEffect(() => localStorage.setItem("dm_name", name), [name]);
-
-  // Парсим зашитые даты как локальные
+  // Даты как локальные
   const startTs = useMemo(() => toLocalTimestamp(SERVICE_START), []);
   const endTs   = useMemo(()   => toLocalTimestamp(DEMOBIL_DATE), []);
-
   const totalMs  = Math.max(0, endTs - startTs);
   const leftMs   = Math.max(0, endTs - now);
   const passedMs = Math.max(0, now - startTs);
 
   const pct = totalMs > 0 ? Math.min(100, Math.max(0, (passedMs / totalMs) * 100)) : 0;
-
-  const leftParts   = msParts(leftMs);
-  const totalParts  = msParts(totalMs);
-  const passedParts = msParts(passedMs);
-
+  const leftParts = msParts(leftMs);
   const isOver = leftMs <= 0 && totalMs > 0;
 
-  // ---- CONFETTI: один раз при достижении нуля
+  // Конфетти один раз при нуле
   useEffect(() => {
     if (isOver && !confettiDoneRef.current) {
       confettiDoneRef.current = true;
@@ -70,6 +57,8 @@ export default function App() {
           origin: { y: 0.25 }
         });
       }, 900);
+      // лёгкая вибрация устройства, если поддерживается
+      try { navigator.vibrate?.(150); } catch {}
     }
     if (!isOver) confettiDoneRef.current = false;
   }, [isOver]);
@@ -82,8 +71,8 @@ export default function App() {
 
   function share() {
     const text = isOver
-      ? `🎉 ${name} ДЕМБЕЛЬНУЛСЯ!\n\nСлужба завершена.`
-      : `⏳ До дембеля ${name}: ${formatParts(leftParts)}.\nПрисоединяйся к отсчёту!`;
+      ? `🎉 ${NAME} ДЕМБЕЛЬНУЛСЯ!\n\nСлужба завершена.`
+      : `⏳ До дембеля ${NAME}: ${formatParts(leftParts)}.\nПрисоединяйся к отсчёту!`;
     const url = window.location.href.split("?")[0];
 
     const twa = window.Telegram?.WebApp;
@@ -91,83 +80,63 @@ export default function App() {
     if (twa?.shareText) return twa.shareText(`${text}\n${url}`);
 
     if (navigator.share) {
-      navigator.share({ title: `Дембель ${name}`, text, url }).catch(() => {});
+      navigator.share({ title: `Дембель ${NAME}`, text, url }).catch(() => {});
       return;
     }
     navigator.clipboard?.writeText(`${text}\n${url}`);
     alert("Ссылка скопирована в буфер обмена ✅");
   }
 
-  // ----- параметры кругового индикатора
-  const size = 360;                 // px (SVG width/height)
-  const stroke = 10;                // толщина кольца
-  const r = (size - stroke) / 2;    // радиус
-  const C = 2 * Math.PI * r;        // длина окружности
-  const progress = pct / 100;
-  const dashoffset = C * (1 - progress);
+  // Круговой прогресс
+  const size = 360;
+  const stroke = 10;
+  const r = (size - stroke) / 2;
+  const C = 2 * Math.PI * r;
+  const dashoffset = C * (1 - pct / 100);
+
+  const hasPublic = Boolean(WEB_PUBLIC_URL);
 
   return (
     <div className="min-h-screen w-full flex flex-col bg-gradient-to-b from-zinc-900 to-zinc-800 text-zinc-50">
-      {/* HERO: Макан по центру */}
+      {/* HERO */}
       <section className="relative flex-1 flex items-center justify-center p-6">
-        {/* мягкая подсветка позади */}
+        {/* glow */}
         <div
           aria-hidden
           className="absolute w-[28rem] h-[28rem] rounded-full blur-3xl opacity-50"
           style={{
-            background:
-              "radial-gradient(closest-side, rgba(16,185,129,0.22), rgba(0,0,0,0))"
+            background: "radial-gradient(closest-side, rgba(16,185,129,0.22), rgba(0,0,0,0))"
           }}
         />
-
         <div className="relative z-10 flex flex-col items-center gap-3 text-center">
-          {/* Круговой прогресс вокруг Макана */}
+          {/* Кольцо + Макан */}
           <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
-            <svg
-              className="absolute inset-0"
-              width={size}
-              height={size}
-              viewBox={`0 0 ${size} ${size}`}
-            >
+            <svg className="absolute inset-0" width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
               <circle
-                cx={size/2}
-                cy={size/2}
-                r={r}
-                fill="none"
-                stroke="rgba(255,255,255,0.15)"
-                strokeWidth={stroke}
+                cx={size/2} cy={size/2} r={r}
+                fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth={stroke}
               />
               <circle
-                cx={size/2}
-                cy={size/2}
-                r={r}
-                fill="none"
-                stroke="rgba(255,255,255,0.9)"
-                strokeWidth={stroke}
-                strokeLinecap="round"
-                strokeDasharray={C}
-                strokeDashoffset={dashoffset}
+                cx={size/2} cy={size/2} r={r}
+                fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth={stroke}
+                strokeLinecap="round" strokeDasharray={C} strokeDashoffset={dashoffset}
                 transform={`rotate(-90 ${size/2} ${size/2})`}
                 style={{ transition: "stroke-dashoffset 0.8s ease" }}
               />
             </svg>
 
-            {/* Изображение Макана с лёгким покачиванием */}
             <img
-              src="/makan.png"
-              alt="Макан"
+              src="/makan.png" alt="Макан"
               className="w-[55%] md:w-[60%] drop-shadow-[0_18px_50px_rgba(0,0,0,0.65)] select-none pointer-events-none animate-wobble"
               draggable="false"
             />
           </div>
 
           {isOver ? (
-            <div className="text-3xl md:text-5xl font-extrabold">🎉 {name} ДЕМБЕЛЬНУЛСЯ!</div>
+            <div className="text-3xl md:text-5xl font-extrabold">🎉 {NAME} ДЕМБЕЛЬНУЛСЯ!</div>
           ) : (
             <>
-              <h1 className="text-xl md:text-2xl font-semibold text-zinc-300">
-                До дембеля {name}
-              </h1>
+              <h1 className="text-xl md:text-2xl font-semibold text-zinc-300">До дембеля {NAME}</h1>
               <div className="text-3xl md:text-5xl font-extrabold tracking-tight">
                 {formatParts(leftParts)}
               </div>
@@ -175,43 +144,43 @@ export default function App() {
             </>
           )}
 
-          {/* Прогресс-бар (линейный, для наглядности) */}
+          {/* Линейный прогресс */}
           <div className="w-full max-w-xl h-3 bg-zinc-800 rounded-full overflow-hidden mt-2">
             <div
               className="h-full bg-white/80"
               style={{ width: `${pct}%` }}
-              aria-valuenow={pct}
-              aria-valuemin={0}
-              aria-valuemax={100}
+              aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}
             />
           </div>
           <div className="text-xs text-zinc-300">Выполнено службы: {pct.toFixed(2)}%</div>
 
           {/* Кнопки */}
-          <div className="flex flex-wrap gap-2 justify-center mt-2">
+          <div className="flex flex-col items-center gap-3 mt-3">
             <button
               onClick={share}
               className="px-4 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 font-medium"
             >
               Поделиться таймером
             </button>
+
+            {/* Подпись + кнопка на паблик */}
+            <div className="text-sm text-zinc-300">Ждём вместе</div>
+            <a
+              href={hasPublic ? WEB_PUBLIC_URL : undefined}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => { if (!hasPublic) { e.preventDefault(); alert("Вставь ссылку на паблик в WEB_PUBLIC_URL"); } }}
+              className="px-4 py-3 rounded-2xl bg-zinc-700 hover:bg-zinc-600 font-medium"
+              style={{ pointerEvents: hasPublic ? "auto" : "auto" }}
+            >
+              Открыть паблик
+            </a>
           </div>
         </div>
       </section>
 
-      
-
-          <p className="text-xs md:text-sm text-zinc-400">
-            Прошло: {formatParts(passedParts)} • Всего службы: {formatParts(totalParts)}
-          </p>
-          <p className="text-xs text-zinc-500">
-            Даты фиксированы в коде (см. константы <code>SERVICE_START</code> и <code>DEMOBIL_DATE</code>).
-          </p>
-        </div>
-      </section>
-
       <footer className="text-xs text-zinc-400 text-center pb-4">
-        Сделано с любовью и иронией • {new Date().getFullYear()}
+        Ждем Брат ! • {new Date().getFullYear()}
       </footer>
     </div>
   );
@@ -219,10 +188,9 @@ export default function App() {
 
 /* ---------- utils ---------- */
 
-// Преобразуем строку вида 'YYYY-MM-DDTHH:mm:ss' как локальное время устройства
+// Преобразуем строку 'YYYY-MM-DDTHH:mm:ss' как локальное время устройства
 function toLocalTimestamp(input) {
   if (!input) return Date.now();
-  // если указан Z или +hh:mm — оставим как есть
   const hasTZ = /Z|[+-]\d{2}:?\d{2}$/.test(input);
   if (hasTZ) return new Date(input).getTime();
   const [date, time = "00:00:00"] = String(input).split("T");
