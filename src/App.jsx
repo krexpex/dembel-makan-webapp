@@ -12,7 +12,7 @@ const DEMOBIL_DATE  = "2026-10-01T00:00:00"; // 1 октября 2026
 export default function App() {
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/Riga";
 
-  const [name, setName] = useState(() => localStorage.getItem("dm_name") || "Макан");
+  const NAME = "Макан";
   const [now, setNow] = useState(Date.now());
   const [compact] = useState(false); // интерфейс без переключателя
 
@@ -199,19 +199,7 @@ export default function App() {
         </div>
       </section>
 
-      {/* Настройки только имени (без дат) */}
-      <section className="w-full flex justify-center px-4 pb-6">
-        <div className="w-full max-w-2xl bg-zinc-900/60 backdrop-blur shadow-xl rounded-3xl p-5 md:p-6 grid gap-4">
-          <h2 className="text-lg font-semibold">Настройки</h2>
-          <div className="flex-1 grid gap-2">
-            <label className="text-sm text-zinc-300">Имя служащего</label>
-            <input
-              className="w-full px-4 py-3 rounded-2xl bg-zinc-800 outline-none focus:ring-2 ring-zinc-500"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Например: Макан"
-            />
-          </div>
+      
 
           <p className="text-xs md:text-sm text-zinc-400">
             Прошло: {formatParts(passedParts)} • Всего службы: {formatParts(totalParts)}
