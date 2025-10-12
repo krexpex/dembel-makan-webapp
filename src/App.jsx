@@ -24,11 +24,11 @@ export default function App() {
   const [popped, setPopped] = useState(false);
   const [entered, setEntered] = useState(false);
 
-  // Счётчик тапов + три флага появления картинок
+  // счётчик и флаги появления изображений
   const [tapCount, setTapCount] = useState(0);
-  const [show1, setShow1] = useState(false); // jeb1.png (3-й тап) — слева, из-за Макана вверх
-  const [show2, setShow2] = useState(false); // jeb2.png (7-й тап) — справа, из-за Макана
-  const [show3, setShow3] = useState(false); // jeb3.png (10-й тап) — дугой сверху
+  const [show1, setShow1] = useState(false); // jeb1.png — 3-й тап
+  const [show2, setShow2] = useState(false); // jeb2.png — 7-й тап
+  const [show3, setShow3] = useState(false); // jeb3.png — 10-й тап
 
   const confettiDoneRef = useRef(false);
 
@@ -44,7 +44,18 @@ export default function App() {
     return () => clearTimeout(t);
   }, []);
 
-  // Служба
+  // Автопропадание надписей спустя ~2.4с
+  useEffect(() => {
+    if (show1) { const t = setTimeout(() => setShow1(false), 2400); return () => clearTimeout(t); }
+  }, [show1]);
+  useEffect(() => {
+    if (show2) { const t = setTimeout(() => setShow2(false), 2400); return () => clearTimeout(t); }
+  }, [show2]);
+  useEffect(() => {
+    if (show3) { const t = setTimeout(() => setShow3(false), 2400); return () => clearTimeout(t); }
+  }, [show3]);
+
+  // время службы
   const startTs = useMemo(() => toLocalTimestamp(SERVICE_START), []);
   const endTs   = useMemo(()   => toLocalTimestamp(DEMOBIL_DATE), []);
   const totalMs  = Math.max(0, endTs - startTs);
@@ -55,7 +66,7 @@ export default function App() {
   const leftParts = msParts(leftMs);
   const isOver = leftMs <= 0 && totalMs > 0;
 
-  // Конфетти при нуле
+  // конфетти при нуле
   useEffect(() => {
     if (isOver && !confettiDoneRef.current) {
       confettiDoneRef.current = true;
@@ -89,15 +100,15 @@ export default function App() {
 
   /* ── Кольцо ── */
   const size = 360, stroke = 10, r = (size - stroke) / 2, C = 2 * Math.PI * r;
-  // 12 сегментов трека
+  // сегментированный серый трек
   const SEGMENTS = 12, segmentLen = C / SEGMENTS, gapLen = Math.max(4, segmentLen * 0.08);
   const dashPattern = `${segmentLen - gapLen} ${gapLen}`;
-  // непрерывный прогресс (рисуется при входе)
+  // непрерывный белый прогресс
   const progressDashArray = C;
   const progressDashOffset = C * (1 - pct / 100);
   const animatedProgressOffset = entered ? progressDashOffset : C;
 
-  // Тап по Макану
+  // тап по Макану
   function onMakanTap() {
     setPopped(true);
     setTimeout(() => setPopped(false), 180);
@@ -118,6 +129,11 @@ export default function App() {
     window.open(url, "_blank", "noopener,noreferrer");
   }
 
+  // clip-path для отображения JEB-изображений строго ВНУТРИ круга
+  const clipStyle = {
+    clipPath: `circle(${r}px at ${size/2}px ${size/2}px)`
+  };
+
   return (
     <div className="min-h-screen w-full bg-gradient-to-b from-[#0f1514] to-[#0b1110] text-zinc-50">
       <div className="mx-auto max-w-6xl grid md:grid-cols-[320px,1fr] gap-4 md:gap-6 p-4">
@@ -136,8 +152,8 @@ export default function App() {
           />
 
           <div className={`relative flex items-center justify-center ${entered ? "appear-scale" : ""}`} style={{ width: size, height: size }}>
-            {/* Сегментированное кольцо */}
-            <svg className="absolute inset-0" width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+            {/* Кольцо */}
+            <svg className="absolute inset-0 z-0" width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
               <circle
                 cx={size/2} cy={size/2} r={r}
                 fill="none"
@@ -160,33 +176,36 @@ export default function App() {
               />
             </svg>
 
-            {/* === Пасхалки-ИЗОБРАЖЕНИЯ === */}
-            {/* 1) 3-й тап — слева, из-за Макана и вверх */}
-            {show1 && (
-              <img
-                src="/jeb1.png"
-                alt="ДЖЕБ"
-                className="absolute left-[4%] bottom-[22%] w-[38%] md:w-[32%] max-w-[260px] -z-0 animate-rise-left pointer-events-none"
-              />
-            )}
+            {/* Зона для JEB-изображений: строго внутри круга и ниже Макана */}
+            <div className="absolute inset-0 z-[5] pointer-events-none" style={clipStyle}>
+              {/* 1) 3-й тап — слева снизу, вылезает и чуть поднимается */}
+              {show1 && (
+                <img
+                  src="/jeb1.png"
+                  alt="ДЖЕБ"
+                  className="absolute left-[6%] bottom-[20%] w-[40%] md:w-[34%] max-w-[280px] jeb-layer jeb-img animate-rise-left auto-fade-out"
+                />
+              )}
 
-            {/* 2) 7-й тап — справа, из-за Макана внутрь */}
-            {show2 && (
-              <img
-                src="/jeb2.png"
-                alt="УШЕЛ ДЖЕБ"
-                className="absolute right-[3%] top-1/2 -translate-y-1/2 w-[44%] md:w-[36%] max-w-[300px] -z-0 animate-slide-from-right pointer-events-none"
-              />
-            )}
+              {/* 2) 7-й тап — справа по центру, заезд внутрь */}
+              {show2 && (
+                <img
+                  src="/jeb2.png"
+                  alt="УШЁЛ ДЖЕБ"
+                  className="absolute right-[5%] top-1/2 -translate-y-1/2 w-[46%] md:w-[38%] max-w-[320px] jeb-layer jeb-img animate-slide-from-right auto-fade-out"
+                />
+              )}
 
-            {/* 3) 10-й тап — дугой над Маканом (изображение появляется сверху по арке) */}
-            {show3 && (
-              <div className="absolute top-[6%] left-1/2 -translate-x-1/2 w-[75%] md:w-[66%] grid place-items-center pointer-events-none animate-arc-pop">
-                <img src="/jeb3.png" alt="ДЖЕБ, УШЕЛ ДЖЕБ" className="w-full" />
-              </div>
-            )}
+              {/* 3) 10-й тап — дугой сверху (картинка) */}
+              {show3 && (
+                <div className="absolute top-[6%] left-1/2 -translate-x-1/2 w-[78%] md:w-[68%] grid place-items-center jeb-layer auto-fade-out">
+                  {/* если у тебя файл jpg — поменяй на /jeb3.jpg */}
+                  <img src="/jeb3.png" alt="ДЖЕБ, УШЁЛ ДЖЕБ" className="w-full jeb-img" />
+                </div>
+              )}
+            </div>
 
-            {/* Макан — крупный, кликабельный */}
+            {/* Макан — поверх всего */}
             <img
               src="/makan.png"
               alt={NICK}
@@ -197,13 +216,13 @@ export default function App() {
                 "transition-transform duration-200 ease-out",
                 "animate-wobble",
                 popped ? "scale-[1.10]" : "scale-100",
-                "w-[74%] md:w-[78%] relative z-10"
+                "w-[74%] md:w-[78%] makan-layer makan-shadow"
               ].join(" ")}
               draggable="false"
             />
           </div>
 
-          {/* Текстовая часть */}
+          {/* Тексты под сценой */}
           <div className={`mt-2 text-center ${entered ? "appear-fade-up" : ""}`}>
             {isOver ? (
               <div className="text-2xl md:text-4xl font-extrabold">🎉 {NICK} ДЕМБЕЛЬНУЛСЯ!</div>
@@ -281,11 +300,6 @@ function SoldierCard({ profile, service }) {
             <span className="text-sm font-medium text-zinc-200 text-right">{value}</span>
           </div>
         ))}
-      </div>
-
-      <div className="mt-4 flex items-center gap-2 text-[11px] text-zinc-500">
-        <span className="inline-block h-2 w-2 rounded-full bg-emerald-400/80" />
-        Карточка формируется из объекта PROFILE в начале файла.
       </div>
     </div>
   );
