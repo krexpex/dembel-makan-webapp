@@ -1,11 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import confetti from "canvas-confetti";
 
-/** ───────── НАСТРОЙКИ (редактируются здесь) ───────── */
-// Псевдоним для заголовков/таймера
+/** ───────── НАСТРОЙКИ ───────── */
 const NICK = "Макан";
-
-// Анкета — правь поля тут в одном месте
 const PROFILE = {
   realName: "Андрей Кириллович Косолапов",
   nickname: "Макан",
@@ -17,19 +14,14 @@ const PROFILE = {
   fitnessCategory: "А",
   assignment: "Может быть направлен в Семёновский полк (уточняется)"
 };
-
-// Даты службы — фикс (локальное время устройства)
 const SERVICE_START = "2025-10-01T00:00:00";
 const DEMOBIL_DATE  = "2026-10-01T00:00:00";
-
-// Ссылка на паблик/канал (вставь позже)
-const WEB_PUBLIC_URL = "";
-/** ─────────────────────────────────────────────────── */
+/** ──────────────────────────── */
 
 export default function App() {
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/Riga";
   const [now, setNow] = useState(Date.now());
-  const [popped, setPopped] = useState(false); // для клика по изображению
+  const [popped, setPopped] = useState(false);
   const confettiDoneRef = useRef(false);
 
   useEffect(() => {
@@ -37,14 +29,12 @@ export default function App() {
     return () => clearInterval(id);
   }, []);
 
-  // Telegram WebApp init
   useEffect(() => {
     const twa = window.Telegram?.WebApp;
     if (!twa) return;
     try { twa.expand(); twa.ready(); twa.enableClosingConfirmation(); } catch {}
   }, []);
 
-  // Время службы
   const startTs = useMemo(() => toLocalTimestamp(SERVICE_START), []);
   const endTs   = useMemo(()   => toLocalTimestamp(DEMOBIL_DATE), []);
   const totalMs  = Math.max(0, endTs - startTs);
@@ -55,7 +45,6 @@ export default function App() {
   const leftParts = msParts(leftMs);
   const isOver = leftMs <= 0 && totalMs > 0;
 
-  // Конфетти при нуле
   useEffect(() => {
     if (isOver && !confettiDoneRef.current) {
       confettiDoneRef.current = true;
@@ -87,28 +76,32 @@ export default function App() {
     navigator.clipboard?.writeText(`${text}\n${url}`); alert("Ссылка скопирована в буфер обмена ✅");
   }
 
-  /* ── Кольцо прогресса ─────────────────────────────────── */
-  const size = 360;                  // диаметр SVG
-  const stroke = 10;                 // толщина
-  const r = (size - stroke) / 2;     // радиус
-  const C = 2 * Math.PI * r;         // длина окружности
+  /* ── Кольцо прогресса ── */
+  const size = 360;
+  const stroke = 10;
+  const r = (size - stroke) / 2;
+  const C = 2 * Math.PI * r;
 
-  // Сегментация на 12 частей (месяцы) — сегментированный ТРЕК
+  // 12 сегментов (месяцы) — серый трек сегментирован
   const SEGMENTS = 12;
   const segmentLen = C / SEGMENTS;
-  const gapLen = Math.max(4, segmentLen * 0.08); // зазор между сегментами
+  const gapLen = Math.max(4, segmentLen * 0.08);
   const dashPattern = `${segmentLen - gapLen} ${gapLen}`;
 
-  // Непрерывный прогресс поверх (чтобы длина корректно соответствовала pct)
+  // Непрерывный белый прогресс поверх
   const progressDashArray = C;
   const progressDashOffset = C * (1 - pct / 100);
 
-  const hasPublic = Boolean(WEB_PUBLIC_URL);
-
-  // Клик по Макану — кратковременное увеличение
   function popOnce() {
     setPopped(true);
     setTimeout(() => setPopped(false), 180);
+  }
+
+  function openGroup() {
+    const url = "https://t.me/zdem_makana";
+    const twa = window.Telegram?.WebApp;
+    if (twa?.openTelegramLink) { twa.openTelegramLink(url); return; }
+    window.open(url, "_blank", "noopener,noreferrer");
   }
 
   return (
@@ -125,10 +118,8 @@ export default function App() {
           <div aria-hidden className="absolute inset-0 -z-10" style={{ background:
             "radial-gradient(30rem 30rem at 50% 20%, rgba(16,185,129,0.18), rgba(0,0,0,0))" }} />
 
-          {/* Кольцо + Макан */}
           <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
             <svg className="absolute inset-0" width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-              {/* сегментированный серый трек */}
               <circle
                 cx={size/2} cy={size/2} r={r}
                 fill="none"
@@ -138,7 +129,6 @@ export default function App() {
                 strokeDasharray={dashPattern}
                 transform={`rotate(-90 ${size/2} ${size/2})`}
               />
-              {/* непрерывный белый прогресс поверх */}
               <circle
                 cx={size/2} cy={size/2} r={r}
                 fill="none"
@@ -152,7 +142,7 @@ export default function App() {
               />
             </svg>
 
-            {/* Макан — чуть больше и с кликом-увеличением */}
+            {/* Макан — больше и с tap-эффектом */}
             <img
               src="/makan.png"
               alt={NICK}
@@ -162,48 +152,42 @@ export default function App() {
                 "drop-shadow-[0_18px_50px_rgba(0,0,0,0.65)]",
                 "transition-transform duration-200 ease-out",
                 "animate-wobble",
-                popped ? "scale-[1.08]" : "scale-100",
-                // по умолчанию крупнее, чем раньше:
-                "w-[68%] md:w-[70%]"
+                popped ? "scale-[1.10]" : "scale-100",
+                "w-[74%] md:w-[78%]" // увеличил базовый размер
               ].join(" ")}
               draggable="false"
             />
           </div>
 
-          {/* Тексты */}
           <div className="mt-2 text-center">
             {isOver ? (
               <div className="text-2xl md:text-4xl font-extrabold">🎉 {NICK} ДЕМБЕЛЬНУЛСЯ!</div>
             ) : (
               <>
                 <h1 className="text-lg md:text-xl font-semibold text-zinc-300">До дембеля {NICK}</h1>
-                <div className="text-2xl md:text-4xl font-extrabold tracking-tight mt-1">{formatParts(leftParts)}</div>
+                <div className="text-2xl md:text-4xl font-extrabод tracking-tight mt-1">{formatParts(leftParts)}</div>
                 <div className="text-xs md:text-sm text-zinc-400 mt-1">Таймзона: {tz}</div>
               </>
             )}
           </div>
 
-          {/* Линейный прогресс */}
           <div className="w-full max-w-xl h-3 bg-zinc-800 rounded-full overflow-hidden mt-3">
             <div className="h-full bg-white/80" style={{ width: `${pct}%` }} />
           </div>
           <div className="text-xs text-zinc-300 mt-1">Выполнено службы: {pct.toFixed(2)}%</div>
 
-          {/* Кнопки */}
           <div className="flex flex-col items-center gap-3 mt-4">
             <button onClick={share} className="px-4 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 font-medium">
               Поделиться таймером
             </button>
 
-            <div className="text-sm text-zinc-300">Ждём вместе</div>
-            <a
-              href={hasPublic ? WEB_PUBLIC_URL : undefined}
-              target="_blank" rel="noopener noreferrer"
-              onClick={(e) => { if (!hasPublic) { e.preventDefault(); alert("Вставь ссылку на паблик в WEB_PUBLIC_URL"); } }}
+            {/* Кнопка в группу Telegram */}
+            <button
+              onClick={openGroup}
               className="px-4 py-3 rounded-2xl bg-zinc-700 hover:bg-zinc-600 font-medium"
             >
-              Открыть паблик
-            </a>
+              Ждём вместе
+            </button>
           </div>
         </section>
       </div>
@@ -237,7 +221,6 @@ function SoldierCard({ profile, service }) {
 
   return (
     <div className="rounded-3xl bg-[rgba(24,24,27,0.85)] shadow-xl p-4 md:p-5 border border-zinc-800/60">
-      {/* Шеврон */}
       <div className="flex items-center gap-3 mb-4">
         <div className="h-10 w-10 rounded-full bg-emerald-600/25 border border-emerald-500/40 grid place-items-center">
           <span className="text-emerald-300 font-semibold">ЖМ</span>
@@ -249,7 +232,6 @@ function SoldierCard({ profile, service }) {
         </div>
       </div>
 
-      {/* Поля анкеты */}
       <div className="grid grid-cols-1 gap-2">
         {fields.map(([label, value]) => (
           <div key={label} className="flex items-center justify-between rounded-xl bg-zinc-900/60 border border-zinc-800 px-3 py-2">
@@ -277,7 +259,6 @@ function shortDate(iso) {
   const d = new Date(ts);
   return d.toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric" });
 }
-// 'YYYY-MM-DDTHH:mm:ss' как локальное
 function toLocalTimestamp(input) {
   if (!input) return Date.now();
   const hasTZ = /Z|[+-]\d{2}:?\d{2}$/.test(input);
