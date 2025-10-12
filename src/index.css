@@ -2,48 +2,93 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ===== Общие стили для плавных входов и динамики ===== */
+/* ===========================
+   БАЗА / ТЁМНЫЙ ФОН / ТЕКСТ
+   =========================== */
 
 html, body {
   margin: 0;
   padding: 0;
   height: 100%;
-  background-color: #0b1110;
+  background-color: #0b1110; /* тёмно-зелёный/чёрный фон */
   color: #f9fafb;
-  font-family: 'Inter', 'Arial', sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
 }
 
-* {
-  box-sizing: border-box;
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+/* Мелкие утилки */
+.transition-base { transition: all .3s ease; }
+.text-shadow { text-shadow: 0 1px 2px rgba(0,0,0,.5); }
+.shadow-deep { box-shadow: 0 8px 30px rgba(0,0,0,.40); }
+
+/* ===========================
+   СЛОИ СЦЕНЫ (Z-INDEX CONTROL)
+   =========================== */
+
+/* Макан — всегда выше всего, кроме системных popups */
+.makan-layer { position: relative; z-index: 30; }
+
+/* На случай, если класс не добавлен — ловим по имени файла */
+img[src$="makan.png"] { position: relative; z-index: 30; }
+
+/* PNG/JPG надписи JEB — поверх фона/кольца/текста, но ниже Макана */
+.jeb-layer { position: absolute; z-index: 20; pointer-events: none; }
+
+/* Фолбэк: если классы не указали — ловим по src */
+img[src*="jeb"] {
+  position: absolute;
+  z-index: 20;
+  pointer-events: none;
 }
 
-/* --- Плавное появление элементов --- */
+/* Дополнительно: фон/кольцо по дефолту под всем */
+.scene-bg { z-index: 0; }
+.scene-under { z-index: 10; }
+
+/* Мягкая тень под «ногами» Макана — усиливает эффект «из-за спины» */
+.makan-shadow::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  height: 35%;
+  background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 25; /* ниже самого Макана, выше надписей быть не должно */
+}
+
+/* ===========================
+   ВХОД СЦЕНЫ / ГЛОУ / ПОКАЧИВАНИЕ
+   =========================== */
+
+/* Плавный подъём блока */
 @keyframes fade-up {
   0% { opacity: 0; transform: translateY(12px); }
   100% { opacity: 1; transform: translateY(0); }
 }
-.appear-fade-up {
-  animation: fade-up 500ms ease-out both;
-}
+.appear-fade-up { animation: fade-up 500ms ease-out both; }
 
+/* Плавное масштаб-проявление */
 @keyframes scale-in {
   0% { opacity: 0; transform: scale(0.94); }
   100% { opacity: 1; transform: scale(1); }
 }
-.appear-scale {
-  animation: scale-in 520ms cubic-bezier(.2,.9,.2,1) both;
-}
+.appear-scale { animation: scale-in 520ms cubic-bezier(.2,.9,.2,1) both; }
 
+/* Нежная вспышка подсветки позади сцены */
 @keyframes glow-flash {
   0% { opacity: 0; }
   30% { opacity: .75; }
   100% { opacity: .18; }
 }
-.glow-enter {
-  animation: glow-flash 900ms ease-out both;
-}
+.glow-enter { animation: glow-flash 900ms ease-out both; }
 
-/* --- Эффект лёгкого покачивания Макана --- */
+/* Лёгкое «покачивание» Макана (дышит) */
 @keyframes wobble {
   0%, 100% { transform: translateY(0) rotate(0deg); }
   25% { transform: translateY(-2px) rotate(-0.6deg); }
@@ -55,89 +100,48 @@ html, body {
   transform-origin: 50% 100%;
 }
 
-/* ===================================================== */
-/* === АН�?МАЦИИ НАДПИСЕЙ jeb1, jeb2, jeb3 (3-7-10 tap) === */
-/* ===================================================== */
+/* ===========================
+   АН�?МАЦИИ ДЛЯ JEB-НАДПИСЕЙ (PNG/JPG)
+   =========================== */
 
-/* 1) jeb1.png — появляется слева из-за Макана и немного вверх */
+/* 1) jeb1 — появляется слева из-за Макана и чуть поднимается */
 @keyframes rise-left {
-  0% {
-    transform: translate(-40px, 30px) scale(0.92);
-    opacity: 0;
-    filter: blur(6px);
-  }
-  60% { filter: blur(0); }
-  100% {
-    transform: translate(0, -8px) scale(1);
-    opacity: 1;
-  }
+  0%   { transform: translate(-40px, 30px) scale(.92); opacity: 0; filter: blur(6px); }
+  60%  { filter: blur(0); }
+  100% { transform: translate(0, -8px) scale(1); opacity: 1; }
 }
-.animate-rise-left {
-  animation: rise-left 650ms cubic-bezier(.2,.9,.2,1) both;
-}
+.animate-rise-left { animation: rise-left 650ms cubic-bezier(.2,.9,.2,1) both; }
 
-/* 2) jeb2.png — заезжает справа из-за Макана внутрь */
+/* 2) jeb2 — заезжает справа из-за Макана */
 @keyframes slide-from-right {
-  0% {
-    transform: translate(40px, -50%) scale(0.96);
-    opacity: 0;
-    filter: blur(6px);
-  }
-  70% { filter: blur(0); }
-  100% {
-    transform: translate(0, -50%) scale(1);
-    opacity: 1;
-  }
+  0%   { transform: translate(40px, -50%) scale(.96); opacity: 0; filter: blur(6px); }
+  70%  { filter: blur(0); }
+  100% { transform: translate(0, -50%) scale(1); opacity: 1; }
 }
-.animate-slide-from-right {
-  animation: slide-from-right 520ms ease-out both;
-}
+.animate-slide-from-right { animation: slide-from-right 520ms ease-out both; }
 
-/* 3) jeb3.png — появляется дугой сверху (поп-эффект) */
+/* 3) jeb3 — появляется сверху «дугой» (поп-эффект) */
 @keyframes arc-pop {
-  0% {
-    transform: translate(-50%, -10px) scale(0.9);
-    opacity: 0;
-  }
-  60% { opacity: 1; }
-  100% {
-    transform: translate(-50%, 0) scale(1);
-    opacity: 1;
-  }
+  0%   { transform: translate(-50%, -10px) scale(.9); opacity: 0; }
+  60%  { opacity: 1; }
+  100% { transform: translate(-50%, 0) scale(1); opacity: 1; }
 }
-.animate-arc-pop {
-  animation: arc-pop 600ms cubic-bezier(.2,.9,.2,1) both;
+.animate-arc-pop { animation: arc-pop 600ms cubic-bezier(.2,.9,.2,1) both; }
+
+/* Мягкая подсветка/пульс при появлении каждой надписи (добавляется вторым классом) */
+@keyframes pop-glow {
+  0%   { opacity: 0; transform: scale(.8); filter: brightness(2) blur(8px); }
+  50%  { opacity: 1; transform: scale(1.05); filter: brightness(1.3) blur(0); }
+  100% { opacity: 1; transform: scale(1); filter: brightness(1); }
 }
+.animate-pop-glow { animation: pop-glow 800ms cubic-bezier(.2,.9,.2,1) both; }
 
-/* ===================================================== */
-/* === ДОПОЛНИТЕЛЬНЫЕ СТ�?Л�? (для плавности и адаптации) === */
-/* ===================================================== */
+/* ===========================
+   ФУТЕР
+   =========================== */
 
-/* Плавный переход при появлении */
-.transition-base {
-  transition: all 0.3s ease;
-}
-
-/* Текст с лёгкой тенью — читается на фоне */
-.text-shadow {
-  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-}
-
-/* Гладкие скроллы */
-html {
-  scroll-behavior: smooth;
-}
-
-/* Для тёмных теней вокруг карточек */
-.shadow-deep {
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
-}
-
-/* Для мини-текста в подвале */
 footer {
-  opacity: 0.75;
-  transition: opacity 0.3s ease;
+  opacity: .75;
+  transition: opacity .3s ease;
 }
-footer:hover {
-  opacity: 1;
-}
+footer:hover { opacity: 1; }
