@@ -22,12 +22,13 @@ export default function App() {
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/Riga";
   const [now, setNow] = useState(Date.now());
   const [popped, setPopped] = useState(false);
+  const [entered, setEntered] = useState(false);
 
-  // счётчик тапов и флаги появления надписей
+  // Счётчик тапов + три флага появления картинок
   const [tapCount, setTapCount] = useState(0);
-  const [showMsg1, setShowMsg1] = useState(false);
-  const [showMsg2, setShowMsg2] = useState(false);
-  const [showMsg3, setShowMsg3] = useState(false);
+  const [show1, setShow1] = useState(false); // jeb1.png (3-й тап) — слева, из-за Макана вверх
+  const [show2, setShow2] = useState(false); // jeb2.png (7-й тап) — справа, из-за Макана
+  const [show3, setShow3] = useState(false); // jeb3.png (10-й тап) — дугой сверху
 
   const confettiDoneRef = useRef(false);
 
@@ -38,10 +39,12 @@ export default function App() {
 
   useEffect(() => {
     const twa = window.Telegram?.WebApp;
-    if (!twa) return;
-    try { twa.expand(); twa.ready(); twa.enableClosingConfirmation(); } catch {}
+    try { twa?.expand(); twa?.ready(); twa?.enableClosingConfirmation(); } catch {}
+    const t = setTimeout(() => setEntered(true), 50);
+    return () => clearTimeout(t);
   }, []);
 
+  // Служба
   const startTs = useMemo(() => toLocalTimestamp(SERVICE_START), []);
   const endTs   = useMemo(()   => toLocalTimestamp(DEMOBIL_DATE), []);
   const totalMs  = Math.max(0, endTs - startTs);
@@ -52,6 +55,7 @@ export default function App() {
   const leftParts = msParts(leftMs);
   const isOver = leftMs <= 0 && totalMs > 0;
 
+  // Конфетти при нуле
   useEffect(() => {
     if (isOver && !confettiDoneRef.current) {
       confettiDoneRef.current = true;
@@ -83,32 +87,26 @@ export default function App() {
     navigator.clipboard?.writeText(`${text}\n${url}`); alert("Ссылка скопирована в буфер обмена ✅");
   }
 
-  /* ── Кольцо прогресса ── */
-  const size = 360;
-  const stroke = 10;
-  const r = (size - stroke) / 2;
-  const C = 2 * Math.PI * r;
-
-  // сегментированный серый трек (12 месяцев)
-  const SEGMENTS = 12;
-  const segmentLen = C / SEGMENTS;
-  const gapLen = Math.max(4, segmentLen * 0.08);
+  /* ── Кольцо ── */
+  const size = 360, stroke = 10, r = (size - stroke) / 2, C = 2 * Math.PI * r;
+  // 12 сегментов трека
+  const SEGMENTS = 12, segmentLen = C / SEGMENTS, gapLen = Math.max(4, segmentLen * 0.08);
   const dashPattern = `${segmentLen - gapLen} ${gapLen}`;
-
-  // непрерывный белый прогресс
+  // непрерывный прогресс (рисуется при входе)
   const progressDashArray = C;
   const progressDashOffset = C * (1 - pct / 100);
+  const animatedProgressOffset = entered ? progressDashOffset : C;
 
-  // клик по Макану: поп-эффект + счётчик
+  // Тап по Макану
   function onMakanTap() {
     setPopped(true);
     setTimeout(() => setPopped(false), 180);
 
     setTapCount((prev) => {
       const next = prev + 1;
-      if (next === 3) setShowMsg1(true);
-      if (next === 7) setShowMsg2(true);
-      if (next === 10) setShowMsg3(true);
+      if (next === 3) setShow1(true);
+      if (next === 7) setShow2(true);
+      if (next === 10) setShow3(true);
       return next;
     });
   }
@@ -125,17 +123,19 @@ export default function App() {
       <div className="mx-auto max-w-6xl grid md:grid-cols-[320px,1fr] gap-4 md:gap-6 p-4">
 
         {/* Анкета слева */}
-        <section className="order-2 md:order-1">
+        <section className={`order-2 md:order-1 ${entered ? "appear-fade-up" : ""}`}>
           <SoldierCard profile={PROFILE} service={{ start: SERVICE_START, end: DEMOBIL_DATE }} />
         </section>
 
-        {/* Таймер */}
+        {/* Таймер / сцена */}
         <section className="order-1 md:order-2 relative flex flex-col items-center justify-start md:justify-center rounded-3xl bg-zinc-900/60 backdrop-blur p-5 md:p-6 shadow-xl overflow-hidden">
-          <div aria-hidden className="absolute inset-0 -z-10" style={{ background:
-            "radial-gradient(30rem 30rem at 50% 20%, rgba(16,185,129,0.18), rgba(0,0,0,0))" }} />
+          <div
+            aria-hidden
+            className={`absolute inset-0 -z-10 ${entered ? "glow-enter" : ""}`}
+            style={{ background: "radial-gradient(30rem 30rem at 50% 20%, rgba(16,185,129,0.18), rgba(0,0,0,0))" }}
+          />
 
-          {/* КОНТЕЙНЕР ДЛЯ СЦЕНЫ */}
-          <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
+          <div className={`relative flex items-center justify-center ${entered ? "appear-scale" : ""}`} style={{ width: size, height: size }}>
             {/* Сегментированное кольцо */}
             <svg className="absolute inset-0" width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
               <circle
@@ -154,50 +154,39 @@ export default function App() {
                 strokeWidth={stroke}
                 strokeLinecap="round"
                 strokeDasharray={progressDashArray}
-                strokeDashoffset={progressDashOffset}
+                strokeDashoffset={animatedProgressOffset}
                 transform={`rotate(-90 ${size/2} ${size/2})`}
-                style={{ transition: "stroke-dashoffset 0.8s ease" }}
+                style={{ transition: "stroke-dashoffset 900ms ease" }}
               />
             </svg>
 
-            {/* --- Надписи-пасхалки --- */}
-            {/* 1) На 3-м тапе — “выползает” из-за Макана */}
-            {showMsg1 && (
-              <div className="absolute inset-0 grid place-items-center -z-0 animate-rise-behind">
-                <span className="jeb-label jeb-1">ДЖЕБ</span>
+            {/* === Пасхалки-ИЗОБРАЖЕНИЯ === */}
+            {/* 1) 3-й тап — слева, из-за Макана и вверх */}
+            {show1 && (
+              <img
+                src="/jeb1.png"
+                alt="ДЖЕБ"
+                className="absolute left-[4%] bottom-[22%] w-[38%] md:w-[32%] max-w-[260px] -z-0 animate-rise-left pointer-events-none"
+              />
+            )}
+
+            {/* 2) 7-й тап — справа, из-за Макана внутрь */}
+            {show2 && (
+              <img
+                src="/jeb2.png"
+                alt="УШЕЛ ДЖЕБ"
+                className="absolute right-[3%] top-1/2 -translate-y-1/2 w-[44%] md:w-[36%] max-w-[300px] -z-0 animate-slide-from-right pointer-events-none"
+              />
+            )}
+
+            {/* 3) 10-й тап — дугой над Маканом (изображение появляется сверху по арке) */}
+            {show3 && (
+              <div className="absolute top-[6%] left-1/2 -translate-x-1/2 w-[75%] md:w-[66%] grid place-items-center pointer-events-none animate-arc-pop">
+                <img src="/jeb3.png" alt="ДЖЕБ, УШЕЛ ДЖЕБ" className="w-full" />
               </div>
             )}
 
-            {/* 2) На 7-м тапе — справа, слайдом внутрь */}
-            {showMsg2 && (
-              <div className="absolute top-1/2 right-0 -translate-y-1/2 pr-2 animate-slide-right pointer-events-none">
-                <span className="jeb-label jeb-2">УШЕЛ&nbsp;ДЖЕБ</span>
-              </div>
-            )}
-
-            {/* 3) На 10-м тапе — дугой сверху (SVG textPath) */}
-            {showMsg3 && (
-              <svg
-                className="absolute inset-0 animate-fade-in-slow pointer-events-none"
-                width={size}
-                height={size}
-                viewBox={`0 0 ${size} ${size}`}
-              >
-                <defs>
-                  {/* дуга чуть больше по радиусу */}
-                  <path id="jeb-arc"
-                        d={`M ${size*0.15} ${size*0.30}
-                           A ${size*0.35} ${size*0.35} 0 0 1 ${size*0.85} ${size*0.30}`} />
-                </defs>
-                <text className="jeb-arc-text">
-                  <textPath href="#jeb-arc" startOffset="50%" textAnchor="middle">
-                    ДЖЕБ, УШЕЛ ДЖЕБ
-                  </textPath>
-                </text>
-              </svg>
-            )}
-
-            {/* Макан — крупнее; по клику поп-эффект и счётчик тапов */}
+            {/* Макан — крупный, кликабельный */}
             <img
               src="/makan.png"
               alt={NICK}
@@ -214,8 +203,8 @@ export default function App() {
             />
           </div>
 
-          {/* Тексты */}
-          <div className="mt-2 text-center">
+          {/* Текстовая часть */}
+          <div className={`mt-2 text-center ${entered ? "appear-fade-up" : ""}`}>
             {isOver ? (
               <div className="text-2xl md:text-4xl font-extrabold">🎉 {NICK} ДЕМБЕЛЬНУЛСЯ!</div>
             ) : (
@@ -238,14 +227,9 @@ export default function App() {
             <button onClick={share} className="px-4 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 font-medium">
               Поделиться таймером
             </button>
-
             <button onClick={openGroup} className="px-4 py-3 rounded-2xl bg-zinc-700 hover:bg-zinc-600 font-medium">
               Ждём вместе
             </button>
-
-            <div className="text-[10px] text-zinc-500">
-              Тапы: {tapCount} (3 → «ДЖЕБ», 7 → «УШЕЛ ДЖЕБ», 10 → «ДЖЕБ, УШЕЛ ДЖЕБ»)
-            </div>
           </div>
         </section>
       </div>
