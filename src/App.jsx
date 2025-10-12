@@ -15,10 +15,10 @@ const PROFILE = {
   },
   country: "Россия",
   profession: "рэпер",
-  yearsActive: "2019 — н.в.",
   genres: ["рэп"],
   aliases: ["MC Гай Фокс", "Nemo MC", "Young Chaser", "Macan"],
-  labels: ["Golden Sound", "Soyuz Music", "Rhymes Music"]
+  fitnessCategory: "А",
+  assignment: "Может быть направлен в Семёновский полк (уточняется)"
 };
 
 // Даты службы — жёстко зашиты (локальное время устройства)
@@ -170,7 +170,7 @@ function SoldierCard({ profile, service }) {
   const start = shortDate(service.start);
   const end   = shortDate(service.end);
 
-  // Структура анкеты — легко добавить/убрать поля
+  // Удобная структура анкеты
   const fields = [
     ["Реальное имя", profile.realName],
     ["Псевдоним", profile.nickname],
@@ -178,10 +178,10 @@ function SoldierCard({ profile, service }) {
     ["Место рождения", profile.birth.place],
     ["Страна", profile.country],
     ["Профессия", profile.profession],
-    ["Годы активности", profile.yearsActive],
     ["Жанры", profile.genres.join(", ")],
     ["Псевдонимы", profile.aliases.join(", ")],
-    ["Лейблы", profile.labels.join(", ")],
+    ["Категория годности", profile.fitnessCategory],
+    ["Место службы", profile.assignment],
     ["Дата призыва", start],
     ["Дембель", end],
   ];
@@ -219,20 +219,15 @@ function SoldierCard({ profile, service }) {
 }
 
 /* ---------- utils ---------- */
-
 function formatBirth(yyyy_mm_dd) {
   const d = new Date(yyyy_mm_dd + "T00:00:00");
-  // пример: 6 января 2002
   return d.toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" });
 }
-
 function shortDate(iso) {
   const ts = toLocalTimestamp(iso);
   const d = new Date(ts);
   return d.toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric" });
 }
-
-// Преобразуем 'YYYY-MM-DDTHH:mm:ss' как локальное время устройства
 function toLocalTimestamp(input) {
   if (!input) return Date.now();
   const hasTZ = /Z|[+-]\d{2}:?\d{2}$/.test(input);
@@ -240,10 +235,8 @@ function toLocalTimestamp(input) {
   const [date, time = "00:00:00"] = String(input).split("T");
   const [y, m, d] = date.split("-").map(Number);
   const [hh, mm, ss] = time.split(":").map(Number);
-  const dt = new Date(y, (m || 1) - 1, d || 1, hh || 0, mm || 0, ss || 0, 0);
-  return dt.getTime();
+  return new Date(y, (m || 1) - 1, d || 1, hh || 0, mm || 0, ss || 0, 0).getTime();
 }
-
 function msParts(ms) {
   let s = Math.max(0, Math.floor(ms / 1000));
   const days = Math.floor(s / 86400); s -= days * 86400;
@@ -252,7 +245,6 @@ function msParts(ms) {
   const seconds = s;
   return { days, hours, minutes, seconds };
 }
-
 function formatParts(p) {
   const dd = p.days > 0 ? `${p.days}д ` : "";
   const hh = String(p.hours).padStart(2, "0");
