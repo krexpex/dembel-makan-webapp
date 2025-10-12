@@ -2,42 +2,48 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  color-scheme: dark;
+/* ===== Общие стили для плавных входов и динамики ===== */
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background-color: #0b1110;
+  color: #f9fafb;
+  font-family: 'Inter', 'Arial', sans-serif;
 }
-/* Покачивание изображения Макана */
-@keyframes wobble {
-    0%, 100% { transform: translateY(0) rotate(0deg); }
-    25% { transform: translateY(-2px) rotate(-0.6deg); }
-    50% { transform: translateY(1px) rotate(0.6deg); }
-    75% { transform: translateY(-1px) rotate(-0.4deg); }
-  }
-  .animate-wobble {
-    animation: wobble 2.4s ease-in-out infinite;
-    transform-origin: 50% 100%;
-    will-change: transform;
-  }
-  /* Появление сцены */
+
+* {
+  box-sizing: border-box;
+}
+
+/* --- Плавное появление элементов --- */
 @keyframes fade-up {
   0% { opacity: 0; transform: translateY(12px); }
   100% { opacity: 1; transform: translateY(0); }
 }
-.appear-fade-up { animation: fade-up 500ms ease-out both; }
+.appear-fade-up {
+  animation: fade-up 500ms ease-out both;
+}
 
 @keyframes scale-in {
   0% { opacity: 0; transform: scale(0.94); }
   100% { opacity: 1; transform: scale(1); }
 }
-.appear-scale { animation: scale-in 520ms cubic-bezier(.2,.9,.2,1) both; }
+.appear-scale {
+  animation: scale-in 520ms cubic-bezier(.2,.9,.2,1) both;
+}
 
 @keyframes glow-flash {
   0% { opacity: 0; }
   30% { opacity: .75; }
   100% { opacity: .18; }
 }
-.glow-enter { animation: glow-flash 900ms ease-out both; }
+.glow-enter {
+  animation: glow-flash 900ms ease-out both;
+}
 
-/* Покачивание Макана */
+/* --- Эффект лёгкого покачивания Макана --- */
 @keyframes wobble {
   0%, 100% { transform: translateY(0) rotate(0deg); }
   25% { transform: translateY(-2px) rotate(-0.6deg); }
@@ -49,26 +55,89 @@
   transform-origin: 50% 100%;
 }
 
-/* 1) Слева из-за Макана и вверх */
+/* ===================================================== */
+/* === АН�?МАЦИИ НАДПИСЕЙ jeb1, jeb2, jeb3 (3-7-10 tap) === */
+/* ===================================================== */
+
+/* 1) jeb1.png — появляется слева из-за Макана и немного вверх */
 @keyframes rise-left {
-  0%   { transform: translate(-40px, 30px) scale(.92); opacity: 0; filter: blur(6px); }
-  60%  { filter: blur(0); }
-  100% { transform: translate(0, -8px) scale(1); opacity: 1; }
+  0% {
+    transform: translate(-40px, 30px) scale(0.92);
+    opacity: 0;
+    filter: blur(6px);
+  }
+  60% { filter: blur(0); }
+  100% {
+    transform: translate(0, -8px) scale(1);
+    opacity: 1;
+  }
 }
-.animate-rise-left { animation: rise-left 650ms cubic-bezier(.2,.9,.2,1) both; }
+.animate-rise-left {
+  animation: rise-left 650ms cubic-bezier(.2,.9,.2,1) both;
+}
 
-/* 2) Справа из-за Макана внутрь */
+/* 2) jeb2.png — заезжает справа из-за Макана внутрь */
 @keyframes slide-from-right {
-  0%   { transform: translate(40px, -50%) scale(.96); opacity: 0; filter: blur(6px); }
-  70%  { filter: blur(0); }
-  100% { transform: translate(0, -50%) scale(1); opacity: 1; }
+  0% {
+    transform: translate(40px, -50%) scale(0.96);
+    opacity: 0;
+    filter: blur(6px);
+  }
+  70% { filter: blur(0); }
+  100% {
+    transform: translate(0, -50%) scale(1);
+    opacity: 1;
+  }
 }
-.animate-slide-from-right { animation: slide-from-right 520ms ease-out both; }
+.animate-slide-from-right {
+  animation: slide-from-right 520ms ease-out both;
+}
 
-/* 3) Арка сверху (лёгкий подскок и масштаб) */
+/* 3) jeb3.png — появляется дугой сверху (поп-эффект) */
 @keyframes arc-pop {
-  0%   { transform: translate(-50%, -10px) scale(.9); opacity: 0; }
-  60%  { opacity: 1; }
-  100% { transform: translate(-50%, 0) scale(1); opacity: 1; }
+  0% {
+    transform: translate(-50%, -10px) scale(0.9);
+    opacity: 0;
+  }
+  60% { opacity: 1; }
+  100% {
+    transform: translate(-50%, 0) scale(1);
+    opacity: 1;
+  }
 }
-.animate-arc-pop { animation: arc-pop 600ms cubic-bezier(.2,.9,.2,1) both; }
+.animate-arc-pop {
+  animation: arc-pop 600ms cubic-bezier(.2,.9,.2,1) both;
+}
+
+/* ===================================================== */
+/* === ДОПОЛНИТЕЛЬНЫЕ СТ�?Л�? (для плавности и адаптации) === */
+/* ===================================================== */
+
+/* Плавный переход при появлении */
+.transition-base {
+  transition: all 0.3s ease;
+}
+
+/* Текст с лёгкой тенью — читается на фоне */
+.text-shadow {
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+
+/* Гладкие скроллы */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Для тёмных теней вокруг карточек */
+.shadow-deep {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+}
+
+/* Для мини-текста в подвале */
+footer {
+  opacity: 0.75;
+  transition: opacity 0.3s ease;
+}
+footer:hover {
+  opacity: 1;
+}
