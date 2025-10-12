@@ -2,17 +2,14 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import confetti from "canvas-confetti";
 
 /** ───────── НАСТРОЙКИ (редактируются здесь) ───────── */
-// Псевдоним, который показываем в таймере и заголовках:
+// Псевдоним для заголовков/таймера
 const NICK = "Макан";
 
-// Реальная анкета (удобно править одно место)
+// Анкета — правь поля тут в одном месте
 const PROFILE = {
   realName: "Андрей Кириллович Косолапов",
   nickname: "Макан",
-  birth: {
-    date: "2002-01-06",              // YYYY-MM-DD
-    place: "Москва, Россия"
-  },
+  birth: { date: "2002-01-06", place: "Москва, Россия" },
   country: "Россия",
   profession: "рэпер",
   genres: ["рэп"],
@@ -21,7 +18,7 @@ const PROFILE = {
   assignment: "Может быть направлен в Семёновский полк (уточняется)"
 };
 
-// Даты службы — жёстко зашиты (локальное время устройства)
+// Даты службы — фикс (локальное время устройства)
 const SERVICE_START = "2025-10-01T00:00:00";
 const DEMOBIL_DATE  = "2026-10-01T00:00:00";
 
@@ -32,6 +29,7 @@ const WEB_PUBLIC_URL = "";
 export default function App() {
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/Riga";
   const [now, setNow] = useState(Date.now());
+  const [popped, setPopped] = useState(false); // для клика по изображению
   const confettiDoneRef = useRef(false);
 
   useEffect(() => {
@@ -39,14 +37,14 @@ export default function App() {
     return () => clearInterval(id);
   }, []);
 
-  // Инициализация Telegram WebApp
+  // Telegram WebApp init
   useEffect(() => {
     const twa = window.Telegram?.WebApp;
     if (!twa) return;
     try { twa.expand(); twa.ready(); twa.enableClosingConfirmation(); } catch {}
   }, []);
 
-  // Служба (время)
+  // Время службы
   const startTs = useMemo(() => toLocalTimestamp(SERVICE_START), []);
   const endTs   = useMemo(()   => toLocalTimestamp(DEMOBIL_DATE), []);
   const totalMs  = Math.max(0, endTs - startTs);
@@ -89,14 +87,32 @@ export default function App() {
     navigator.clipboard?.writeText(`${text}\n${url}`); alert("Ссылка скопирована в буфер обмена ✅");
   }
 
-  // Круговой прогресс
-  const size = 360, stroke = 10, r = (size - stroke) / 2;
-  const C = 2 * Math.PI * r;
-  const dashoffset = C * (1 - pct / 100);
+  /* ── Кольцо прогресса ─────────────────────────────────── */
+  const size = 360;                  // диаметр SVG
+  const stroke = 10;                 // толщина
+  const r = (size - stroke) / 2;     // радиус
+  const C = 2 * Math.PI * r;         // длина окружности
+
+  // Сегментация на 12 частей (месяцы) — сегментированный ТРЕК
+  const SEGMENTS = 12;
+  const segmentLen = C / SEGMENTS;
+  const gapLen = Math.max(4, segmentLen * 0.08); // зазор между сегментами
+  const dashPattern = `${segmentLen - gapLen} ${gapLen}`;
+
+  // Непрерывный прогресс поверх (чтобы длина корректно соответствовала pct)
+  const progressDashArray = C;
+  const progressDashOffset = C * (1 - pct / 100);
+
   const hasPublic = Boolean(WEB_PUBLIC_URL);
 
+  // Клик по Макану — кратковременное увеличение
+  function popOnce() {
+    setPopped(true);
+    setTimeout(() => setPopped(false), 180);
+  }
+
   return (
-    <div className="min-h-screen w-full bg-gradient-to-b from-zinc-900 to-zinc-800 text-zinc-50">
+    <div className="min-h-screen w-full bg-gradient-to-b from-[#0f1514] to-[#0b1110] text-zinc-50">
       <div className="mx-auto max-w-6xl grid md:grid-cols-[320px,1fr] gap-4 md:gap-6 p-4">
 
         {/* Анкета слева */}
@@ -109,20 +125,52 @@ export default function App() {
           <div aria-hidden className="absolute inset-0 -z-10" style={{ background:
             "radial-gradient(30rem 30rem at 50% 20%, rgba(16,185,129,0.18), rgba(0,0,0,0))" }} />
 
+          {/* Кольцо + Макан */}
           <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
             <svg className="absolute inset-0" width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-              <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth={stroke} />
-              <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(255,255,255,0.92)" strokeWidth={stroke}
-                      strokeLinecap="round" strokeDasharray={C} strokeDashoffset={dashoffset}
-                      transform={`rotate(-90 ${size/2} ${size/2})`}
-                      style={{ transition: "stroke-dashoffset 0.8s ease" }} />
+              {/* сегментированный серый трек */}
+              <circle
+                cx={size/2} cy={size/2} r={r}
+                fill="none"
+                stroke="rgba(255,255,255,0.13)"
+                strokeWidth={stroke}
+                strokeLinecap="butt"
+                strokeDasharray={dashPattern}
+                transform={`rotate(-90 ${size/2} ${size/2})`}
+              />
+              {/* непрерывный белый прогресс поверх */}
+              <circle
+                cx={size/2} cy={size/2} r={r}
+                fill="none"
+                stroke="rgba(255,255,255,0.95)"
+                strokeWidth={stroke}
+                strokeLinecap="round"
+                strokeDasharray={progressDashArray}
+                strokeDashoffset={progressDashOffset}
+                transform={`rotate(-90 ${size/2} ${size/2})`}
+                style={{ transition: "stroke-dashoffset 0.8s ease" }}
+              />
             </svg>
 
-            <img src="/makan.png" alt={NICK}
-                 className="w-[55%] md:w-[60%] drop-shadow-[0_18px_50px_rgba(0,0,0,0.65)] select-none pointer-events-none animate-wobble"
-                 draggable="false" />
+            {/* Макан — чуть больше и с кликом-увеличением */}
+            <img
+              src="/makan.png"
+              alt={NICK}
+              onClick={popOnce}
+              className={[
+                "cursor-pointer select-none",
+                "drop-shadow-[0_18px_50px_rgba(0,0,0,0.65)]",
+                "transition-transform duration-200 ease-out",
+                "animate-wobble",
+                popped ? "scale-[1.08]" : "scale-100",
+                // по умолчанию крупнее, чем раньше:
+                "w-[68%] md:w-[70%]"
+              ].join(" ")}
+              draggable="false"
+            />
           </div>
 
+          {/* Тексты */}
           <div className="mt-2 text-center">
             {isOver ? (
               <div className="text-2xl md:text-4xl font-extrabold">🎉 {NICK} ДЕМБЕЛЬНУЛСЯ!</div>
@@ -135,11 +183,13 @@ export default function App() {
             )}
           </div>
 
+          {/* Линейный прогресс */}
           <div className="w-full max-w-xl h-3 bg-zinc-800 rounded-full overflow-hidden mt-3">
             <div className="h-full bg-white/80" style={{ width: `${pct}%` }} />
           </div>
           <div className="text-xs text-zinc-300 mt-1">Выполнено службы: {pct.toFixed(2)}%</div>
 
+          {/* Кнопки */}
           <div className="flex flex-col items-center gap-3 mt-4">
             <button onClick={share} className="px-4 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 font-medium">
               Поделиться таймером
@@ -170,7 +220,6 @@ function SoldierCard({ profile, service }) {
   const start = shortDate(service.start);
   const end   = shortDate(service.end);
 
-  // Удобная структура анкеты
   const fields = [
     ["Реальное имя", profile.realName],
     ["Псевдоним", profile.nickname],
@@ -228,6 +277,7 @@ function shortDate(iso) {
   const d = new Date(ts);
   return d.toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric" });
 }
+// 'YYYY-MM-DDTHH:mm:ss' как локальное
 function toLocalTimestamp(input) {
   if (!input) return Date.now();
   const hasTZ = /Z|[+-]\d{2}:?\d{2}$/.test(input);
