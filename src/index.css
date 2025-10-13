@@ -10,7 +10,7 @@ html, body {
   margin: 0;
   padding: 0;
   height: 100%;
-  background-color: #0b1110; /* тёмно-зелёный/чёрный фон */
+  background-color: #0b1110;
   color: #f9fafb;
   font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
 }
@@ -18,32 +18,21 @@ html, body {
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 
-/* Мелкие утилки */
 .transition-base { transition: all .3s ease; }
 .text-shadow { text-shadow: 0 1px 2px rgba(0,0,0,.5); }
 .shadow-deep { box-shadow: 0 8px 30px rgba(0,0,0,.40); }
 
 /* ===========================
-   СЛОИ СЦЕНЫ (Z-INDEX CONTROL)
+   СЛОИ СЦЕНЫ
    =========================== */
 
-/* Макан — всегда выше всего, кроме системных popups */
 .makan-layer { position: relative; z-index: 30; }
-
-/* На случай, если класс не добавлен — ловим по имени файла */
 img[src$="makan.png"] { position: relative; z-index: 30; }
 
-/* PNG/JPG надписи JEB — поверх фона/кольца/текста, но ниже Макана */
 .jeb-layer { position: absolute; z-index: 20; pointer-events: none; }
+img[src*="jeb"] { position: absolute; z-index: 20; pointer-events: none; }
 
-/* Фолбэк: если классы не указали — ловим по src */
-img[src*="jeb"] {
-  position: absolute;
-  z-index: 20;
-  pointer-events: none;
-}
-
-/* Мягкая тень под «ногами» Макана — усиливает эффект «из-за спины» */
+/* Тень у ног Макана — эффект «из-за спины» */
 .makan-shadow::after {
   content: "";
   position: absolute;
@@ -55,28 +44,25 @@ img[src*="jeb"] {
   background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
   border-radius: 50%;
   pointer-events: none;
-  z-index: 25; /* ниже самого Макана, выше надписей быть не должно */
+  z-index: 25;
 }
 
 /* ===========================
-   ВХОД СЦЕНЫ / ГЛОУ / ПОКАЧИВАНИЕ
+   ВХОД/ГЛОУ/ПОКАЧИВАНИЕ
    =========================== */
 
-/* Плавный подъём блока */
 @keyframes fade-up {
   0% { opacity: 0; transform: translateY(12px); }
   100% { opacity: 1; transform: translateY(0); }
 }
 .appear-fade-up { animation: fade-up 500ms ease-out both; }
 
-/* Плавное масштаб-проявление */
 @keyframes scale-in {
   0% { opacity: 0; transform: scale(0.94); }
   100% { opacity: 1; transform: scale(1); }
 }
 .appear-scale { animation: scale-in 520ms cubic-bezier(.2,.9,.2,1) both; }
 
-/* Нежная вспышка подсветки позади сцены */
 @keyframes glow-flash {
   0% { opacity: 0; }
   30% { opacity: .75; }
@@ -84,38 +70,31 @@ img[src*="jeb"] {
 }
 .glow-enter { animation: glow-flash 900ms ease-out both; }
 
-/* Лёгкое «покачивание» Макана (дышит) */
 @keyframes wobble {
   0%, 100% { transform: translateY(0) rotate(0deg); }
   25% { transform: translateY(-2px) rotate(-0.6deg); }
   50% { transform: translateY(1px) rotate(0.6deg); }
   75% { transform: translateY(-1px) rotate(-0.4deg); }
 }
-.animate-wobble {
-  animation: wobble 2.4s ease-in-out infinite;
-  transform-origin: 50% 100%;
-}
+.animate-wobble { animation: wobble 2.4s ease-in-out infinite; transform-origin: 50% 100%; }
 
 /* ===========================
-   АН�?МАЦИИ ДЛЯ JEB-НАДПИСЕЙ
+   JEB PNG: ПРОЗРАЧНОСТЬ + АНИМАЦИИ
    =========================== */
 
-/* В некоторых PNG может быть белая подложка — убираем её на тёмном фоне */
 .jeb-img {
-  mix-blend-mode: multiply;      /* белое "пропадает", чёрный остаётся чёрным */
+  mix-blend-mode: multiply; /* убирает белые подложки, чёрный остаётся чёрным */
   image-rendering: auto;
   background: transparent;
 }
 
-/* Авто-исчезновение через ~2.4с */
+/* Авто-исчезновение (задержка 2.4с, затем уход) */
 @keyframes fade-out {
   to { opacity: 0; transform: translateY(-6px) scale(.98); }
 }
-.auto-fade-out {
-  animation: fade-out 420ms ease-out 2.4s forwards; /* задержка 2.4с, затем плавный уход */
-}
+.auto-fade-out { animation: fade-out 420ms ease-out 2.4s forwards; }
 
-/* 1) jeb1 — появляется слева из-за Макана и чуть поднимается */
+/* 1) слева снизу */
 @keyframes rise-left {
   0%   { transform: translate(-40px, 30px) scale(.92); opacity: 0; filter: blur(6px); }
   60%  { filter: blur(0); }
@@ -123,7 +102,7 @@ img[src*="jeb"] {
 }
 .animate-rise-left { animation: rise-left 650ms cubic-bezier(.2,.9,.2,1) both; }
 
-/* 2) jeb2 — заезжает справа из-за Макана */
+/* 2) справа в центр */
 @keyframes slide-from-right {
   0%   { transform: translate(40px, -50%) scale(.96); opacity: 0; filter: blur(6px); }
   70%  { filter: blur(0); }
@@ -131,7 +110,7 @@ img[src*="jeb"] {
 }
 .animate-slide-from-right { animation: slide-from-right 520ms ease-out both; }
 
-/* 3) jeb3 — появляется сверху «дугой» (поп-эффект) */
+/* 3) дугой сверху */
 @keyframes arc-pop {
   0%   { transform: translate(-50%, -10px) scale(.9); opacity: 0; }
   60%  { opacity: 1; }
@@ -140,11 +119,53 @@ img[src*="jeb"] {
 .animate-arc-pop { animation: arc-pop 600ms cubic-bezier(.2,.9,.2,1) both; }
 
 /* ===========================
-   ФУТЕР
+   GLASS UI: BURGER + BOTTOM BAR
    =========================== */
 
-footer {
-  opacity: .75;
-  transition: opacity .3s ease;
+/* Кнопка-бургер */
+.glass-btn{
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.12);
+  box-shadow: 0 6px 20px rgba(0,0,0,.25);
+  transition: transform .15s ease, background .2s ease;
 }
-footer:hover { opacity: 1; }
+.glass-btn:active { transform: scale(.96); }
+.glass-btn:hover { background: rgba(255,255,255,0.12); }
+
+/* Выпадающее меню */
+.glass-menu{
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  background: linear-gradient(180deg, rgba(24,24,27,0.75), rgba(24,24,27,0.55));
+  color: #fff;
+}
+
+/* Нижняя панель */
+.glass-bar{
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.06));
+  border: 1px solid rgba(255,255,255,0.15);
+  box-shadow: 0 10px 35px rgba(0,0,0,.35);
+}
+
+/* Кнопки внутри бара */
+.glass-item{
+  height: 42px;
+  width: 42px;
+  display: grid;
+  place-items: center;
+  color: #e5e7eb;
+  border-radius: 12px;
+  transition: transform .12s ease, background .2s ease, color .2s ease;
+}
+.glass-item:hover{
+  background: rgba(255,255,255,0.10);
+  color: #fff;
+}
+.glass-item:active{
+  transform: translateY(1px) scale(.98);
+}

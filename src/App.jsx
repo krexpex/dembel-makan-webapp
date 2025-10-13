@@ -24,6 +24,11 @@ export default function App() {
   const [popped, setPopped] = useState(false);
   const [entered, setEntered] = useState(false);
 
+  // вибрация
+  const [vibrateEnabled, setVibrateEnabled] = useState(true);
+  // меню
+  const [menuOpen, setMenuOpen] = useState(false);
+
   // счётчик и флаги появления изображений
   const [tapCount, setTapCount] = useState(0);
   const [show1, setShow1] = useState(false); // jeb1.png — 3-й тап
@@ -43,6 +48,15 @@ export default function App() {
     const t = setTimeout(() => setEntered(true), 50);
     return () => clearTimeout(t);
   }, []);
+
+  // загрузка/сохранение вибрации
+  useEffect(() => {
+    const saved = localStorage.getItem("vibrateEnabled");
+    if (saved !== null) setVibrateEnabled(saved === "1");
+  }, []);
+  useEffect(() => {
+    localStorage.setItem("vibrateEnabled", vibrateEnabled ? "1" : "0");
+  }, [vibrateEnabled]);
 
   // Автопропадание надписей спустя ~2.4с
   useEffect(() => {
@@ -113,6 +127,13 @@ export default function App() {
     setPopped(true);
     setTimeout(() => setPopped(false), 180);
 
+    // вибрация (если включена)
+    if (vibrateEnabled) {
+      try { navigator.vibrate?.(30); } catch {}
+      // лёгкая haptic через Telegram API (если поддерживает)
+      try { window.Telegram?.WebApp?.HapticFeedback?.impactOccurred?.("light"); } catch {}
+    }
+
     setTapCount((prev) => {
       const next = prev + 1;
       if (next === 3) setShow1(true);
@@ -129,15 +150,46 @@ export default function App() {
     window.open(url, "_blank", "noopener,noreferrer");
   }
 
-  // clip-path для отображения JEB-изображений строго ВНУТРИ круга
-  const clipStyle = {
-    clipPath: `circle(${r}px at ${size/2}px ${size/2}px)`
-  };
+  // clip-path для JEB-изображений строго ВНУТРИ круга
+  const clipStyle = { clipPath: `circle(${r}px at ${size/2}px ${size/2}px)` };
+
+  // переключатель вибрации
+  function toggleVibration() {
+    setVibrateEnabled(v => !v);
+    // микро-тик при смене состояния
+    try { navigator.vibrate?.(10); } catch {}
+    setMenuOpen(false);
+  }
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-b from-[#0f1514] to-[#0b1110] text-zinc-50">
-      <div className="mx-auto max-w-6xl grid md:grid-cols-[320px,1fr] gap-4 md:gap-6 p-4">
+      {/* Бургер меню (fixed, слева сверху) */}
+      <div className="fixed left-3 top-3 z-[60]">
+        <button
+          aria-label="Открыть меню"
+          onClick={() => setMenuOpen(o => !o)}
+          className="glass-btn h-10 w-10 grid place-items-center rounded-xl"
+        >
+          <BurgerIcon />
+        </button>
 
+        {/* Выпадающее меню */}
+        {menuOpen && (
+          <div className="mt-2 w-60 glass-menu rounded-2xl p-2 shadow-xl border border-white/10">
+            <button
+              onClick={toggleVibration}
+              className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/8 transition-colors"
+            >
+              {vibrateEnabled ? <VibrationOnIcon /> : <VibrationOffIcon />}
+              <span className="text-sm">
+                {vibrateEnabled ? "Выключить вибрацию" : "Включить вибрацию"}
+              </span>
+            </button>
+          </div>
+        )}
+      </div>
+
+      <div className="mx-auto max-w-6xl grid md:grid-cols-[320px,1fr] gap-4 md:gap-6 p-4 pb-28">
         {/* Анкета слева */}
         <section className={`order-2 md:order-1 ${entered ? "appear-fade-up" : ""}`}>
           <SoldierCard profile={PROFILE} service={{ start: SERVICE_START, end: DEMOBIL_DATE }} />
@@ -178,7 +230,7 @@ export default function App() {
 
             {/* Зона для JEB-изображений: строго внутри круга и ниже Макана */}
             <div className="absolute inset-0 z-[5] pointer-events-none" style={clipStyle}>
-              {/* 1) 3-й тап — слева снизу, вылезает и чуть поднимается */}
+              {/* 1) 3-й тап — слева снизу */}
               {show1 && (
                 <img
                   src="/jeb1.png"
@@ -187,7 +239,7 @@ export default function App() {
                 />
               )}
 
-              {/* 2) 7-й тап — справа по центру, заезд внутрь */}
+              {/* 2) 7-й тап — справа по центру */}
               {show2 && (
                 <img
                   src="/jeb2.png"
@@ -199,7 +251,6 @@ export default function App() {
               {/* 3) 10-й тап — дугой сверху (картинка) */}
               {show3 && (
                 <div className="absolute top-[6%] left-1/2 -translate-x-1/2 w-[78%] md:w-[68%] grid place-items-center jeb-layer auto-fade-out">
-                  {/* если у тебя файл jpg — поменяй на /jeb3.jpg */}
                   <img src="/jeb3.png" alt="ДЖЕБ, УШЁЛ ДЖЕБ" className="w-full jeb-img" />
                 </div>
               )}
@@ -253,7 +304,22 @@ export default function App() {
         </section>
       </div>
 
-      <footer className="text-xs text-zinc-400 text-center pb-4">
+      {/* Нижняя «liquid glass» панель */}
+      <nav className="fixed left-0 right-0 bottom-3 z-[55] flex justify-center px-4">
+        <div className="glass-bar w-full max-w-md h-14 rounded-2xl px-4 flex items-center justify-between">
+          <button className="glass-item" aria-label="Каска">
+            <HelmetIcon />
+          </button>
+          <button className="glass-item" aria-label="ID карта">
+            <IdCardIcon />
+          </button>
+          <button className="glass-item" aria-label="Медали / достижения">
+            <MedalIcon />
+          </button>
+        </div>
+      </nav>
+
+      <footer className="text-xs text-zinc-400 text-center pb-5 pt-1">
         Сделано с любовью и иронией • {new Date().getFullYear()}
       </footer>
     </div>
@@ -338,4 +404,57 @@ function formatParts(p) {
   const mm = String(p.minutes).padStart(2, "0");
   const ss = String(p.seconds).padStart(2, "0");
   return `${dd}${hh}:${mm}:${ss}`;
+}
+
+/* ───────── МИНИ-ИКОНКИ (inline SVG) ───────── */
+function BurgerIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+      <path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+    </svg>
+  );
+}
+function VibrationOnIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+      <rect x="7" y="3" width="10" height="18" rx="2" stroke="currentColor" strokeWidth="2"/>
+      <path d="M2 8l2 2-2 2 2 2-2 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+      <path d="M22 8l-2 2 2 2-2 2 2 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+    </svg>
+  );
+}
+function VibrationOffIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+      <rect x="7" y="3" width="10" height="18" rx="2" stroke="currentColor" strokeWidth="2"/>
+      <path d="M2 8l2 2-2 2 2 2-2 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity=".35"/>
+      <path d="M22 8l-2 2 2 2-2 2 2 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity=".35"/>
+      <path d="M5 5l14 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+    </svg>
+  );
+}
+function HelmetIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <path d="M3 13a9 9 0 1118 0v4H3v-4z" stroke="currentColor" strokeWidth="2" fill="none"/>
+      <path d="M12 4v5h9" stroke="currentColor" strokeWidth="2" />
+    </svg>
+  );
+}
+function IdCardIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="2"/>
+      <circle cx="9" cy="12" r="2" stroke="currentColor" strokeWidth="2"/>
+      <path d="M14 10h5M14 13h5M14 16h5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+    </svg>
+  );
+}
+function MedalIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="14" r="4" stroke="currentColor" strokeWidth="2"/>
+      <path d="M7 3l5 6 5-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
 }
