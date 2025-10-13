@@ -20,23 +20,35 @@ const DEMOBIL_DATE  = "2026-10-01T00:00:00";
 
 export default function App() {
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/Riga";
+
+  // вкладки нижнего меню: timer | id | medals
+  const [tab, setTab] = useState("timer");
+  const prevTabRef = useRef(tab);
+
+  // для «капельки» — направление движения
+  const [blobDir, setBlobDir] = useState("right");
+
+  // бургер меню
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [burgerHidden, setBurgerHidden] = useState(false);
+  const lastScrollY = useRef(0);
+
+  // вибрация
+  const [vibrateEnabled, setVibrateEnabled] = useState(true);
+
+  // таймеры
   const [now, setNow] = useState(Date.now());
   const [popped, setPopped] = useState(false);
   const [entered, setEntered] = useState(false);
 
-  // вибрация
-  const [vibrateEnabled, setVibrateEnabled] = useState(true);
-  // меню
-  const [menuOpen, setMenuOpen] = useState(false);
-
-  // счётчик и флаги появления изображений
+  // счётчик и флаги появления JEB изображений
   const [tapCount, setTapCount] = useState(0);
-  const [show1, setShow1] = useState(false); // jeb1.png — 3-й тап
-  const [show2, setShow2] = useState(false); // jeb2.png — 7-й тап
-  const [show3, setShow3] = useState(false); // jeb3.png — 10-й тап
-
+  const [show1, setShow1] = useState(false);
+  const [show2, setShow2] = useState(false);
+  const [show3, setShow3] = useState(false);
   const confettiDoneRef = useRef(false);
 
+  // системные эффекты
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
@@ -58,16 +70,22 @@ export default function App() {
     localStorage.setItem("vibrateEnabled", vibrateEnabled ? "1" : "0");
   }, [vibrateEnabled]);
 
-  // Автопропадание надписей спустя ~2.4с
+  // скрыть/показать бургер при скролле
   useEffect(() => {
-    if (show1) { const t = setTimeout(() => setShow1(false), 2400); return () => clearTimeout(t); }
-  }, [show1]);
-  useEffect(() => {
-    if (show2) { const t = setTimeout(() => setShow2(false), 2400); return () => clearTimeout(t); }
-  }, [show2]);
-  useEffect(() => {
-    if (show3) { const t = setTimeout(() => setShow3(false), 2400); return () => clearTimeout(t); }
-  }, [show3]);
+    function onScroll() {
+      const y = window.scrollY || 0;
+      if (y > lastScrollY.current + 8) setBurgerHidden(true);
+      else if (y < lastScrollY.current - 8) setBurgerHidden(false);
+      lastScrollY.current = y;
+    }
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // JEB автопропадание
+  useEffect(() => { if (show1) { const t = setTimeout(() => setShow1(false), 2400); return () => clearTimeout(t);} }, [show1]);
+  useEffect(() => { if (show2) { const t = setTimeout(() => setShow2(false), 2400); return () => clearTimeout(t);} }, [show2]);
+  useEffect(() => { if (show3) { const t = setTimeout(() => setShow3(false), 2400); return () => clearTimeout(t);} }, [show3]);
 
   // время службы
   const startTs = useMemo(() => toLocalTimestamp(SERVICE_START), []);
@@ -114,23 +132,18 @@ export default function App() {
 
   /* ── Кольцо ── */
   const size = 360, stroke = 10, r = (size - stroke) / 2, C = 2 * Math.PI * r;
-  // сегментированный серый трек
   const SEGMENTS = 12, segmentLen = C / SEGMENTS, gapLen = Math.max(4, segmentLen * 0.08);
   const dashPattern = `${segmentLen - gapLen} ${gapLen}`;
-  // непрерывный белый прогресс
   const progressDashArray = C;
   const progressDashOffset = C * (1 - pct / 100);
   const animatedProgressOffset = entered ? progressDashOffset : C;
 
-  // тап по Макану
   function onMakanTap() {
     setPopped(true);
     setTimeout(() => setPopped(false), 180);
 
-    // вибрация (если включена)
     if (vibrateEnabled) {
       try { navigator.vibrate?.(30); } catch {}
-      // лёгкая haptic через Telegram API (если поддерживает)
       try { window.Telegram?.WebApp?.HapticFeedback?.impactOccurred?.("light"); } catch {}
     }
 
@@ -150,30 +163,38 @@ export default function App() {
     window.open(url, "_blank", "noopener,noreferrer");
   }
 
-  // clip-path для JEB-изображений строго ВНУТРИ круга
+  // clip-path для jeb внутри круга
   const clipStyle = { clipPath: `circle(${r}px at ${size/2}px ${size/2}px)` };
 
-  // переключатель вибрации
+  // меню переключатель вибрации
   function toggleVibration() {
     setVibrateEnabled(v => !v);
-    // микро-тик при смене состояния
     try { navigator.vibrate?.(10); } catch {}
     setMenuOpen(false);
   }
 
+  // переключение таба и направление «капли»
+  function switchTab(next) {
+    if (next === tab) return;
+    const order = ["timer","id","medals"];
+    const dir = order.indexOf(next) > order.indexOf(tab) ? "right" : "left";
+    setBlobDir(dir);
+    prevTabRef.current = tab;
+    setTab(next);
+  }
+
   return (
     <div className="min-h-screen w-full bg-gradient-to-b from-[#0f1514] to-[#0b1110] text-zinc-50">
-      {/* Бургер меню (fixed, слева сверху) */}
-      <div className="fixed left-3 top-3 z-[60]">
+      {/* Бургер — прячется на скролле */}
+      <div className={`fixed left-3 top-3 z-[60] transition-transform duration-250 ${burgerHidden ? "-translate-y-14 opacity-0" : "translate-y-0 opacity-100"}`}>
         <button
           aria-label="Открыть меню"
           onClick={() => setMenuOpen(o => !o)}
-          className="glass-btn h-10 w-10 grid place-items-center rounded-xl"
+          className="glass-btn h-11 w-11 grid place-items-center rounded-2xl"
         >
           <BurgerIcon />
         </button>
 
-        {/* Выпадающее меню */}
         {menuOpen && (
           <div className="mt-2 w-60 glass-menu rounded-2xl p-2 shadow-xl border border-white/10">
             <button
@@ -189,139 +210,118 @@ export default function App() {
         )}
       </div>
 
-      <div className="mx-auto max-w-6xl grid md:grid-cols-[320px,1fr] gap-4 md:gap-6 p-4 pb-28">
-        {/* Анкета слева */}
-        <section className={`order-2 md:order-1 ${entered ? "appear-fade-up" : ""}`}>
-          <SoldierCard profile={PROFILE} service={{ start: SERVICE_START, end: DEMOBIL_DATE }} />
-        </section>
-
-        {/* Таймер / сцена */}
-        <section className="order-1 md:order-2 relative flex flex-col items-center justify-start md:justify-center rounded-3xl bg-zinc-900/60 backdrop-blur p-5 md:p-6 shadow-xl overflow-hidden">
-          <div
-            aria-hidden
-            className={`absolute inset-0 -z-10 ${entered ? "glow-enter" : ""}`}
-            style={{ background: "radial-gradient(30rem 30rem at 50% 20%, rgba(16,185,129,0.18), rgba(0,0,0,0))" }}
-          />
-
-          <div className={`relative flex items-center justify-center ${entered ? "appear-scale" : ""}`} style={{ width: size, height: size }}>
-            {/* Кольцо */}
-            <svg className="absolute inset-0 z-0" width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-              <circle
-                cx={size/2} cy={size/2} r={r}
-                fill="none"
-                stroke="rgba(255,255,255,0.13)"
-                strokeWidth={stroke}
-                strokeLinecap="butt"
-                strokeDasharray={dashPattern}
-                transform={`rotate(-90 ${size/2} ${size/2})`}
-              />
-              <circle
-                cx={size/2} cy={size/2} r={r}
-                fill="none"
-                stroke="rgba(255,255,255,0.95)"
-                strokeWidth={stroke}
-                strokeLinecap="round"
-                strokeDasharray={progressDashArray}
-                strokeDashoffset={animatedProgressOffset}
-                transform={`rotate(-90 ${size/2} ${size/2})`}
-                style={{ transition: "stroke-dashoffset 900ms ease" }}
-              />
-            </svg>
-
-            {/* Зона для JEB-изображений: строго внутри круга и ниже Макана */}
-            <div className="absolute inset-0 z-[5] pointer-events-none" style={clipStyle}>
-              {/* 1) 3-й тап — слева снизу */}
-              {show1 && (
-                <img
-                  src="/jeb1.png"
-                  alt="ДЖЕБ"
-                  className="absolute left-[6%] bottom-[20%] w-[40%] md:w-[34%] max-w-[280px] jeb-layer jeb-img animate-rise-left auto-fade-out"
+      {/* Контент — по табам */}
+      <main className="mx-auto max-w-6xl p-4 pb-32">
+        {tab === "timer" && (
+          <section className="relative flex flex-col items-center justify-center rounded-3xl bg-zinc-900/60 backdrop-blur p-5 md:p-6 shadow-xl overflow-hidden">
+            <div
+              aria-hidden
+              className={`absolute inset-0 -z-10 ${entered ? "glow-enter" : ""}`}
+              style={{ background: "radial-gradient(30rem 30rem at 50% 20%, rgba(16,185,129,0.18), rgba(0,0,0,0))" }}
+            />
+            <div className={`relative flex items-center justify-center ${entered ? "appear-scale" : ""}`} style={{ width: size, height: size }}>
+              <svg className="absolute inset-0 z-0" width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+                <circle
+                  cx={size/2} cy={size/2} r={r}
+                  fill="none"
+                  stroke="rgba(255,255,255,0.13)"
+                  strokeWidth={stroke}
+                  strokeLinecap="butt"
+                  strokeDasharray={dashPattern}
+                  transform={`rotate(-90 ${size/2} ${size/2})`}
                 />
-              )}
-
-              {/* 2) 7-й тап — справа по центру */}
-              {show2 && (
-                <img
-                  src="/jeb2.png"
-                  alt="УШЁЛ ДЖЕБ"
-                  className="absolute right-[5%] top-1/2 -translate-y-1/2 w-[46%] md:w-[38%] max-w-[320px] jeb-layer jeb-img animate-slide-from-right auto-fade-out"
+                <circle
+                  cx={size/2} cy={size/2} r={r}
+                  fill="none"
+                  stroke="rgba(255,255,255,0.95)"
+                  strokeWidth={stroke}
+                  strokeLinecap="round"
+                  strokeDasharray={progressDashArray}
+                  strokeDashoffset={animatedProgressOffset}
+                  transform={`rotate(-90 ${size/2} ${size/2})`}
+                  style={{ transition: "stroke-dashoffset 900ms ease" }}
                 />
-              )}
+              </svg>
 
-              {/* 3) 10-й тап — дугой сверху (картинка) */}
-              {show3 && (
-                <div className="absolute top-[6%] left-1/2 -translate-x-1/2 w-[78%] md:w-[68%] grid place-items-center jeb-layer auto-fade-out">
-                  <img src="/jeb3.png" alt="ДЖЕБ, УШЁЛ ДЖЕБ" className="w-full jeb-img" />
-                </div>
+              {/* JEB внутри круга */}
+              <div className="absolute inset-0 z-[5] pointer-events-none" style={clipStyle}>
+                {show1 && (
+                  <img src="/jeb1.png" alt="jeb1"
+                       className="absolute left-[6%] bottom-[20%] w-[40%] md:w-[34%] max-w-[280px] jeb-layer jeb-img animate-rise-left auto-fade-out" />
+                )}
+                {show2 && (
+                  <img src="/jeb2.png" alt="jeb2"
+                       className="absolute right-[5%] top-1/2 -translate-y-1/2 w-[46%] md:w-[38%] max-w-[320px] jeb-layer jeb-img animate-slide-from-right auto-fade-out" />
+                )}
+                {show3 && (
+                  <div className="absolute top-[6%] left-1/2 -translate-x-1/2 w-[78%] md:w-[68%] grid place-items-center jeb-layer auto-fade-out">
+                    <img src="/jeb3.png" alt="jeb3" className="w-full jeb-img"/>
+                  </div>
+                )}
+              </div>
+
+              {/* Макан */}
+              <img
+                src="/makan.png"
+                alt={NICK}
+                onClick={onMakanTap}
+                className={[
+                  "cursor-pointer select-none",
+                  "drop-shadow-[0_18px_50px_rgba(0,0,0,0.65)]",
+                  "transition-transform duration-200 ease-out",
+                  "animate-wobble",
+                  popped ? "scale-[1.10]" : "scale-100",
+                  "w-[74%] md:w-[78%] makan-layer makan-shadow"
+                ].join(" ")}
+                draggable="false"
+              />
+            </div>
+
+            {/* подписи */}
+            <div className={`mt-2 text-center ${entered ? "appear-fade-up" : ""}`}>
+              {isOver ? (
+                <div className="text-2xl md:text-4xl font-extrabold">🎉 {NICK} ДЕМБЕЛЬНУЛСЯ!</div>
+              ) : (
+                <>
+                  <h1 className="text-lg md:text-xl font-semibold text-zinc-300">До дембеля {NICK}</h1>
+                  <div className="text-2xl md:text-4xl font-extrabold tracking-tight mt-1">{formatParts(leftParts)}</div>
+                  <div className="text-xs md:text-sm text-zinc-400 mt-1">Таймзона: {tz}</div>
+                </>
               )}
             </div>
 
-            {/* Макан — поверх всего */}
-            <img
-              src="/makan.png"
-              alt={NICK}
-              onClick={onMakanTap}
-              className={[
-                "cursor-pointer select-none",
-                "drop-shadow-[0_18px_50px_rgba(0,0,0,0.65)]",
-                "transition-transform duration-200 ease-out",
-                "animate-wobble",
-                popped ? "scale-[1.10]" : "scale-100",
-                "w-[74%] md:w-[78%] makan-layer makan-shadow"
-              ].join(" ")}
-              draggable="false"
-            />
-          </div>
+            <div className="w-full max-w-xl h-3 bg-zinc-800 rounded-full overflow-hidden mt-3">
+              <div className="h-full bg-white/80" style={{ width: `${pct}%` }} />
+            </div>
+            <div className="text-xs text-zinc-300 mt-1">Выполнено службы: {pct.toFixed(2)}%</div>
 
-          {/* Тексты под сценой */}
-          <div className={`mt-2 text-center ${entered ? "appear-fade-up" : ""}`}>
-            {isOver ? (
-              <div className="text-2xl md:text-4xl font-extrabold">🎉 {NICK} ДЕМБЕЛЬНУЛСЯ!</div>
-            ) : (
-              <>
-                <h1 className="text-lg md:text-xl font-semibold text-zinc-300">До дембеля {NICK}</h1>
-                <div className="text-2xl md:text-4xl font-extrabold tracking-tight mt-1">{formatParts(leftParts)}</div>
-                <div className="text-xs md:text-sm text-zinc-400 mt-1">Таймзона: {tz}</div>
-              </>
-            )}
-          </div>
+            <div className="flex flex-col items-center gap-3 mt-4">
+              <button onClick={share} className="px-4 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 font-medium">
+                Поделиться таймером
+              </button>
+              <button onClick={openGroup} className="px-4 py-3 rounded-2xl bg-zinc-700 hover:bg-zinc-600 font-medium">
+                Ждём вместе
+              </button>
+            </div>
+          </section>
+        )}
 
-          {/* Линейный прогресс */}
-          <div className="w-full max-w-xl h-3 bg-zinc-800 rounded-full overflow-hidden mt-3">
-            <div className="h-full bg-white/80" style={{ width: `${pct}%` }} />
-          </div>
-          <div className="text-xs text-zinc-300 mt-1">Выполнено службы: {pct.toFixed(2)}%</div>
+        {tab === "id" && (
+          <section className="rounded-3xl bg-[rgba(24,24,27,0.85)] shadow-xl p-4 md:p-6 border border-zinc-800/60 max-w-2xl mx-auto">
+            <SoldierCard profile={PROFILE} service={{ start: SERVICE_START, end: DEMOBIL_DATE }} />
+          </section>
+        )}
 
-          {/* Кнопки */}
-          <div className="flex flex-col items-center gap-3 mt-4">
-            <button onClick={share} className="px-4 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 font-medium">
-              Поделиться таймером
-            </button>
-            <button onClick={openGroup} className="px-4 py-3 rounded-2xl bg-zinc-700 hover:bg-zinc-600 font-medium">
-              Ждём вместе
-            </button>
-          </div>
-        </section>
-      </div>
+        {tab === "medals" && (
+          <section className="rounded-3xl bg-zinc-900/60 backdrop-blur p-6 shadow-xl border border-zinc-800/60 max-w-2xl mx-auto text-center">
+            <div className="text-xl font-semibold mb-2">Достижения</div>
+            <div className="text-zinc-400 text-sm">Скоро здесь появятся медали и трофеи.</div>
+          </section>
+        )}
+      </main>
 
-      {/* Нижняя «liquid glass» панель */}
-      <nav className="fixed left-0 right-0 bottom-3 z-[55] flex justify-center px-4">
-        <div className="glass-bar w-full max-w-md h-14 rounded-2xl px-4 flex items-center justify-between">
-          <button className="glass-item" aria-label="Каска">
-            <HelmetIcon />
-          </button>
-          <button className="glass-item" aria-label="ID карта">
-            <IdCardIcon />
-          </button>
-          <button className="glass-item" aria-label="Медали / достижения">
-            <MedalIcon />
-          </button>
-        </div>
-      </nav>
-
-      <footer className="text-xs text-zinc-400 text-center pb-5 pt-1">
-        Сделано с любовью и иронией • {new Date().getFullYear()}
-      </footer>
+      {/* Нижний «островок» с каплей */}
+      <BottomNav tab={tab} onChange={switchTab} blobDir={blobDir} />
     </div>
   );
 }
@@ -347,9 +347,9 @@ function SoldierCard({ profile, service }) {
   ];
 
   return (
-    <div className="rounded-3xl bg-[rgba(24,24,27,0.85)] shadow-xl p-4 md:p-5 border border-zinc-800/60">
+    <div>
       <div className="flex items-center gap-3 mb-4">
-        <div className="h-10 w-10 rounded-full bg-emerald-600/25 border border-emerald-500/40 grid place-items-center">
+        <div className="h-12 w-12 rounded-full bg-emerald-600/25 border border-emerald-500/40 grid place-items-center">
           <span className="text-emerald-300 font-semibold">ЖМ</span>
         </div>
         <div>
@@ -368,6 +368,48 @@ function SoldierCard({ profile, service }) {
         ))}
       </div>
     </div>
+  );
+}
+
+/* ───────── Нижнее меню с каплей ───────── */
+function BottomNav({ tab, onChange, blobDir }) {
+  // координаты позиций капли (в %, относительно контейнера)
+  const positions = { timer: "16.5%", id: "50%", medals: "83.5%" };
+  return (
+    <nav className="fixed left-0 right-0 bottom-10 z-[55] flex justify-center px-4">
+      <div className="island w-[92vw] max-w-[680px] h-[72px] rounded-[36px] px-6 flex items-center justify-between relative">
+        {/* Goo фильтр */}
+        <svg className="absolute opacity-0 pointer-events-none" width="0" height="0">
+          <defs>
+            <filter id="goo">
+              <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="blur" />
+              <feColorMatrix in="blur" mode="matrix"
+                values="1 0 0 0 0
+                        0 1 0 0 0
+                        0 0 1 0 0
+                        0 0 0 20 -10" result="goo" />
+              <feComposite in="SourceGraphic" in2="goo" operator="atop" />
+            </filter>
+          </defs>
+        </svg>
+
+        {/* Капля */}
+        <div
+          className={`blob ${blobDir === "right" ? "blob-right" : "blob-left"}`}
+          style={{ left: positions[tab] }}
+        />
+
+        <button className={`island-btn ${tab==="timer"?"active":""}`} aria-label="Таймер" onClick={() => onChange("timer")}>
+          <HelmetIcon />
+        </button>
+        <button className={`island-btn ${tab==="id"?"active":""}`} aria-label="ID" onClick={() => onChange("id")}>
+          <IdCardIcon />
+        </button>
+        <button className={`island-btn ${tab==="medals"?"active":""}`} aria-label="Медали" onClick={() => onChange("medals")}>
+          <MedalIcon />
+        </button>
+      </div>
+    </nav>
   );
 }
 
@@ -406,7 +448,7 @@ function formatParts(p) {
   return `${dd}${hh}:${mm}:${ss}`;
 }
 
-/* ───────── МИНИ-ИКОНКИ (inline SVG) ───────── */
+/* ───────── Иконки ───────── */
 function BurgerIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -435,7 +477,7 @@ function VibrationOffIcon() {
 }
 function HelmetIcon() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
       <path d="M3 13a9 9 0 1118 0v4H3v-4z" stroke="currentColor" strokeWidth="2" fill="none"/>
       <path d="M12 4v5h9" stroke="currentColor" strokeWidth="2" />
     </svg>
@@ -443,7 +485,7 @@ function HelmetIcon() {
 }
 function IdCardIcon() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
       <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="2"/>
       <circle cx="9" cy="12" r="2" stroke="currentColor" strokeWidth="2"/>
       <path d="M14 10h5M14 13h5M14 16h5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
@@ -452,7 +494,7 @@ function IdCardIcon() {
 }
 function MedalIcon() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
       <circle cx="12" cy="14" r="4" stroke="currentColor" strokeWidth="2"/>
       <path d="M7 3l5 6 5-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
     </svg>
