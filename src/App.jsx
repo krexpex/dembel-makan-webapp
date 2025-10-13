@@ -20,23 +20,33 @@ const DEMOBIL_DATE  = "2026-10-01T00:00:00";
 /* ========= APP ========= */
 export default function App() {
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/Riga";
+
+  // вкладки/островок
   const [tab, setTab] = useState("timer");
   const [blobDir, setBlobDir] = useState("right");
+
+  // бургер
   const [menuOpen, setMenuOpen] = useState(false);
   const [burgerHidden, setBurgerHidden] = useState(false);
+  const lastScrollY = useRef(0);
+
+  // вибрация
   const [vibrateEnabled, setVibrateEnabled] = useState(true);
 
+  // таймер
   const [now, setNow] = useState(Date.now());
   const [entered, setEntered] = useState(false);
+
+  // макан
   const [popped, setPopped] = useState(false);
 
+  // «ДЖЕБ» PNG
   const [tapCount, setTapCount] = useState(0);
   const [show1, setShow1] = useState(false);
   const [show2, setShow2] = useState(false);
   const [show3, setShow3] = useState(false);
 
   const confettiDoneRef = useRef(false);
-  const lastScrollY = useRef(0);
 
   /* — системные эффекты — */
   useEffect(() => { const id=setInterval(()=>setNow(Date.now()),1000); return ()=>clearInterval(id);},[]);
@@ -279,30 +289,35 @@ function SoldierCard({ profile, service }) {
   );
 }
 
-/* ========= ОСТРОВОК ========= */
+/* ========= ОСТРОВОК (компактный, пузырёк + капля) ========= */
 function BottomIsland({ tab, onChange, dir }) {
   const contRef = useRef(null);
   const b1 = useRef(null), b2 = useRef(null), b3 = useRef(null);
-  const [blob, setBlob] = useState({ x:0, w:0 });
+
+  const [bubble, setBubble] = useState({ x: 0, w: 56 });
+  const [blob, setBlob]     = useState({ x: 0, w: 56 });
   const [mounted, setMounted] = useState(false);
 
-  function placeBlob(btn){
-    const cont=contRef.current; if(!cont||!btn?.current) return;
+  function currentBtn(name){ return name==="timer"?b1 : name==="id"?b2 : b3; }
+  function centerOf(btn){
+    const cont=contRef.current; if(!cont||!btn?.current) return {x:0,w:56};
     const c=cont.getBoundingClientRect(); const b=btn.current.getBoundingClientRect();
-    setBlob({ x:b.left - c.left + b.width/2, w: b.width*0.9 });
+    return { x: b.left - c.left + b.width/2, w: b.width };
   }
+
   useLayoutEffect(()=>{
     setMounted(true);
-    const ro=new ResizeObserver(()=>{ placeBlob(tab==="timer"?b1:tab==="id"?b2:b3); });
+    const ro=new ResizeObserver(()=>{ const {x,w}=centerOf(currentBtn(tab)); setBubble({x, w:Math.max(52, w*0.92)}); setBlob({x, w:Math.max(52, w*0.92)}); });
     if(contRef.current) ro.observe(contRef.current);
-    setTimeout(()=>placeBlob(tab==="timer"?b1:tab==="id"?b2:b3),0);
+    setTimeout(()=>{ const {x,w}=centerOf(currentBtn(tab)); setBubble({x, w:Math.max(52, w*0.92)}); setBlob({x, w:Math.max(52, w*0.92)}); },0);
     return ()=>ro.disconnect();
   },[]);
-  useEffect(()=>{ placeBlob(tab==="timer"?b1:tab==="id"?b2:b3); },[tab]);
+  useEffect(()=>{ const {x,w}=centerOf(currentBtn(tab)); setBubble({x, w:Math.max(52, w*0.92)}); setBlob({x, w:Math.max(52, w*0.92)}); },[tab]);
 
   return (
     <nav className="fixed left-0 right-0 bottom-[calc(10px+env(safe-area-inset-bottom,0px))] z-[55] flex justify-center px-4">
-      <div ref={contRef} className="island not-full w-[86vw] max-w-[600px] h-[68px] rounded-[34px] px-4 flex items-center justify-between relative">
+      <div ref={contRef} className="island island-compact not-full h-[64px] px-3 relative">
+        {/* defs для goo */}
         <svg className="absolute opacity-0 pointer-events-none" width="0" height="0">
           <defs>
             <filter id="goo">
@@ -317,16 +332,23 @@ function BottomIsland({ tab, onChange, dir }) {
           </defs>
         </svg>
 
-        {/* капля */}
-        <div className={`blob-real ${dir==="right"?"stretch-r":"stretch-l"} ${mounted?"blob-mounted":""}`}
-             style={{ "--x": `${blob.x}px`, "--w": `${Math.max(56, blob.w)}px` }}>
+        {/* Пузырёк вокруг активной иконки */}
+        <div className={`active-bubble ${mounted?"bubble-mounted":""}`} style={{ "--x": `${bubble.x}px`, "--w": `${bubble.w}px` }}>
+          <div className="active-bubble-core"/>
+          <div className="active-bubble-gloss"/>
+        </div>
+
+        {/* Капля-перетекание под иконками */}
+        <div className={`blob-real ${dir==="right"?"stretch-r":"stretch-l"} ${mounted?"blob-mounted":""}`} style={{ "--x": `${blob.x}px`, "--w": `${blob.w}px` }}>
           <div className="blob-core"/><div className="blob-spec"/>
         </div>
 
-        {/* кнопки */}
-        <button ref={b1} className={`island-btn ${tab==="timer"?"active":""}`} aria-label="Timer"  onClick={()=>onChange("timer")}><HelmetIcon/></button>
-        <button ref={b2} className={`island-btn ${tab==="id"?"active":""}`}     aria-label="ID"     onClick={()=>onChange("id")}><IdCardIcon/></button>
-        <button ref={b3} className={`island-btn ${tab==="medals"?"active":""}`} aria-label="Medal"  onClick={()=>onChange("medals")}><MedalIcon/></button>
+        {/* Кнопки — компактный шаг, всегда видны */}
+        <div className="island-row">
+          <button ref={b1} className={`island-btn ${tab==="timer"?"active":""}`} aria-label="Timer"  onClick={()=>onChange("timer")}><HelmetIcon/></button>
+          <button ref={b2} className={`island-btn ${tab==="id"?"active":""}`}     aria-label="ID"     onClick={()=>onChange("id")}><IdCardIcon/></button>
+          <button ref={b3} className={`island-btn ${tab==="medals"?"active":""}`} aria-label="Medal"  onClick={()=>onChange("medals")}><MedalIcon/></button>
+        </div>
       </div>
     </nav>
   );
