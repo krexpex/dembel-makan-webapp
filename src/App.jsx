@@ -1,7 +1,7 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import confetti from "canvas-confetti";
 
-/* ========= КОНСТАНТЫ / ДАННЫЕ ========= */
+/* ========= ДАННЫЕ ========= */
 const NICK = "Макан";
 const PROFILE = {
   realName: "Андрей Кириллович Косолапов",
@@ -17,81 +17,60 @@ const PROFILE = {
 const SERVICE_START = "2025-10-01T00:00:00";
 const DEMOBIL_DATE  = "2026-10-01T00:00:00";
 
-/* ====================================== */
+/* ========= APP ========= */
 export default function App() {
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/Riga";
-
-  // вкладки и направление «капли»
   const [tab, setTab] = useState("timer");
   const [blobDir, setBlobDir] = useState("right");
-  const prevTab = useRef(tab);
-
-  // бургер и автоскрытие
   const [menuOpen, setMenuOpen] = useState(false);
   const [burgerHidden, setBurgerHidden] = useState(false);
-  const lastScrollY = useRef(0);
-
-  // вибрация
   const [vibrateEnabled, setVibrateEnabled] = useState(true);
 
-  // таймер
   const [now, setNow] = useState(Date.now());
   const [entered, setEntered] = useState(false);
-
-  // анимация макана
   const [popped, setPopped] = useState(false);
 
-  // «ДЖЕБ» PNG
   const [tapCount, setTapCount] = useState(0);
   const [show1, setShow1] = useState(false);
   const [show2, setShow2] = useState(false);
   const [show3, setShow3] = useState(false);
 
   const confettiDoneRef = useRef(false);
+  const lastScrollY = useRef(0);
 
-  /* ---------- системные эффекты ---------- */
-  useEffect(() => { const id = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(id); }, []);
+  /* — системные эффекты — */
+  useEffect(() => { const id=setInterval(()=>setNow(Date.now()),1000); return ()=>clearInterval(id);},[]);
   useEffect(() => {
     const twa = window.Telegram?.WebApp;
     try { twa?.expand(); twa?.ready(); twa?.enableClosingConfirmation(); } catch {}
-    const t = setTimeout(() => setEntered(true), 40);
-    return () => clearTimeout(t);
-  }, []);
+    const t=setTimeout(()=>setEntered(true),40); return ()=>clearTimeout(t);
+  },[]);
+  useEffect(() => { const saved=localStorage.getItem("vibrateEnabled"); if(saved!==null) setVibrateEnabled(saved==="1");},[]);
+  useEffect(() => { localStorage.setItem("vibrateEnabled",vibrateEnabled?"1":"0"); },[vibrateEnabled]);
+
   useEffect(() => {
-    const saved = localStorage.getItem("vibrateEnabled");
-    if (saved !== null) setVibrateEnabled(saved === "1");
-  }, []);
-  useEffect(() => { localStorage.setItem("vibrateEnabled", vibrateEnabled ? "1" : "0"); }, [vibrateEnabled]);
+    const onScroll=()=>{ const y=window.scrollY||0;
+      if (y>lastScrollY.current+6) setBurgerHidden(true);
+      else if (y<lastScrollY.current-6) setBurgerHidden(false);
+      lastScrollY.current=y; };
+    window.addEventListener("scroll",onScroll,{passive:true});
+    return ()=>window.removeEventListener("scroll",onScroll);
+  },[]);
 
-  // спрятать бургер при прокрутке вниз
-  useEffect(() => {
-    function onScroll() {
-      const y = window.scrollY || 0;
-      if (y > lastScrollY.current + 6) setBurgerHidden(true);
-      else if (y < lastScrollY.current - 6) setBurgerHidden(false);
-      lastScrollY.current = y;
-    }
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  useEffect(() => { if(show1){const t=setTimeout(()=>setShow1(false),2400); return ()=>clearTimeout(t);} },[show1]);
+  useEffect(() => { if(show2){const t=setTimeout(()=>setShow2(false),2400); return ()=>clearTimeout(t);} },[show2]);
+  useEffect(() => { if(show3){const t=setTimeout(()=>setShow3(false),2400); return ()=>clearTimeout(t);} },[show3]);
 
-  // авто-исчезновение PNG
-  useEffect(() => { if (show1) { const t=setTimeout(()=>setShow1(false),2400); return ()=>clearTimeout(t);} }, [show1]);
-  useEffect(() => { if (show2) { const t=setTimeout(()=>setShow2(false),2400); return ()=>clearTimeout(t);} }, [show2]);
-  useEffect(() => { if (show3) { const t=setTimeout(()=>setShow3(false),2400); return ()=>clearTimeout(t);} }, [show3]);
-
-  /* ---------- время службы ---------- */
+  /* — время службы — */
   const startTs = useMemo(() => toLocalTimestamp(SERVICE_START), []);
   const endTs   = useMemo(()   => toLocalTimestamp(DEMOBIL_DATE), []);
   const totalMs  = Math.max(0, endTs - startTs);
   const leftMs   = Math.max(0, endTs - now);
   const passedMs = Math.max(0, now - startTs);
-
-  const pct = totalMs > 0 ? Math.min(100, Math.max(0, (passedMs / totalMs) * 100)) : 0;
+  const pct = totalMs>0 ? Math.min(100, Math.max(0,(passedMs/totalMs)*100)) : 0;
   const leftParts = msParts(leftMs);
-  const isOver = leftMs <= 0 && totalMs > 0;
+  const isOver = leftMs<=0 && totalMs>0;
 
-  // конфетти при нуле
   useEffect(() => {
     if (isOver && !confettiDoneRef.current) {
       confettiDoneRef.current = true;
@@ -106,7 +85,7 @@ export default function App() {
     confetti({ particleCount:n, spread:65, startVelocity:38, origin:{x:0.8,y:0.4} });
   }
 
-  /* ---------- действия ---------- */
+  /* — действия — */
   function onMakanTap(){
     setPopped(true); setTimeout(()=>setPopped(false),180);
     if (vibrateEnabled) {
@@ -114,10 +93,10 @@ export default function App() {
       try { window.Telegram?.WebApp?.HapticFeedback?.impactOccurred?.("light"); } catch {}
     }
     setTapCount(prev=>{
-      const next = prev+1;
-      if (next===3) setShow1(true);
-      if (next===7) setShow2(true);
-      if (next===10) setShow3(true);
+      const next=prev+1;
+      if(next===3) setShow1(true);
+      if(next===7) setShow2(true);
+      if(next===10) setShow3(true);
       return next;
     });
   }
@@ -141,26 +120,24 @@ export default function App() {
   function switchTab(next){
     if (next===tab) return;
     const order=["timer","id","medals"];
-    setBlobDir(order.indexOf(next) > order.indexOf(tab) ? "right" : "left");
-    prevTab.current=tab; setTab(next);
+    setBlobDir(order.indexOf(next)>order.indexOf(tab)?"right":"left");
+    setTab(next);
   }
 
-  /* ---------- кольцо ---------- */
+  /* — кольцо — */
   const size=360, stroke=10, r=(size-stroke)/2, C=2*Math.PI*r;
   const SEGMENTS=12, segmentLen=C/SEGMENTS, gapLen=Math.max(4, segmentLen*0.08);
   const dashPattern=`${segmentLen-gapLen} ${gapLen}`;
   const progressDashArray=C;
   const progressDashOffset=C*(1-pct/100);
   const animatedProgressOffset=entered?progressDashOffset:C;
-
-  // ограничение PNG внутри круга
   const clipStyle={ clipPath:`circle(${r}px at ${size/2}px ${size/2}px)` };
 
-  /* ---------- рендер ---------- */
+  /* — рендер — */
   return (
     <div className="min-h-screen w-full bg-gradient-to-b from-[#0f1514] to-[#0b1110] text-zinc-50">
 
-      {/* Бургер (прячется при скролле) */}
+      {/* Бургер */}
       <div className={`fixed left-3 top-3 z-[60] transition-transform duration-250 ${burgerHidden?"-translate-y-14 opacity-0":"translate-y-0 opacity-100"}`}>
         <button onClick={()=>setMenuOpen(o=>!o)} className="glass-btn h-11 w-11 grid place-items-center rounded-2xl" aria-label="menu"><BurgerIcon/></button>
         {menuOpen && (
@@ -173,7 +150,7 @@ export default function App() {
         )}
       </div>
 
-      {/* Контент по вкладкам */}
+      {/* Контент */}
       <main className="mx-auto max-w-6xl p-4 pb-[calc(120px+env(safe-area-inset-bottom,0px))]">
 
         {tab==="timer" && (
@@ -191,7 +168,7 @@ export default function App() {
                         transform={`rotate(-90 ${size/2} ${size/2})`} style={{transition:"stroke-dashoffset 900ms ease"}}/>
               </svg>
 
-              {/* PNG-надписи поверх круга, но под Маканом */}
+              {/* PNG надписи */}
               <div className="absolute inset-0 z-[5] pointer-events-none" style={clipStyle}>
                 {show1 && <img src="/jeb1.png" alt="jeb1" className="absolute left-[6%] bottom-[20%] w-[40%] md:w-[34%] max-w-[280px] jeb-layer jeb-img animate-rise-left auto-fade-out"/>}
                 {show2 && <img src="/jeb2.png" alt="jeb2" className="absolute right-[5%] top-1/2 -translate-y-1/2 w-[46%] md:w-[38%] max-w-[320px] jeb-layer jeb-img animate-slide-from-right auto-fade-out"/>}
@@ -202,6 +179,7 @@ export default function App() {
                 )}
               </div>
 
+              {/* Макан */}
               <img
                 src="/makan.png" alt={NICK} draggable="false" onClick={onMakanTap}
                 className={[
@@ -253,13 +231,13 @@ export default function App() {
         )}
       </main>
 
-      {/* Нижний островок с каплей */}
+      {/* Островок */}
       <BottomIsland tab={tab} onChange={switchTab} dir={blobDir}/>
     </div>
   );
 }
 
-/* ========= Карточка ID ========= */
+/* ========= ID ========= */
 function SoldierCard({ profile, service }) {
   const start = shortDate(service.start);
   const end   = shortDate(service.end);
@@ -301,7 +279,7 @@ function SoldierCard({ profile, service }) {
   );
 }
 
-/* ========= Нижний островок ========= */
+/* ========= ОСТРОВОК ========= */
 function BottomIsland({ tab, onChange, dir }) {
   const contRef = useRef(null);
   const b1 = useRef(null), b2 = useRef(null), b3 = useRef(null);
@@ -325,7 +303,6 @@ function BottomIsland({ tab, onChange, dir }) {
   return (
     <nav className="fixed left-0 right-0 bottom-[calc(10px+env(safe-area-inset-bottom,0px))] z-[55] flex justify-center px-4">
       <div ref={contRef} className="island not-full w-[86vw] max-w-[600px] h-[68px] rounded-[34px] px-4 flex items-center justify-between relative">
-        {/* defs для goo */}
         <svg className="absolute opacity-0 pointer-events-none" width="0" height="0">
           <defs>
             <filter id="goo">
@@ -340,13 +317,13 @@ function BottomIsland({ tab, onChange, dir }) {
           </defs>
         </svg>
 
-        {/* капля под кнопками */}
+        {/* капля */}
         <div className={`blob-real ${dir==="right"?"stretch-r":"stretch-l"} ${mounted?"blob-mounted":""}`}
              style={{ "--x": `${blob.x}px`, "--w": `${Math.max(56, blob.w)}px` }}>
           <div className="blob-core"/><div className="blob-spec"/>
         </div>
 
-        {/* кнопки (всегда сверху и видны) */}
+        {/* кнопки */}
         <button ref={b1} className={`island-btn ${tab==="timer"?"active":""}`} aria-label="Timer"  onClick={()=>onChange("timer")}><HelmetIcon/></button>
         <button ref={b2} className={`island-btn ${tab==="id"?"active":""}`}     aria-label="ID"     onClick={()=>onChange("id")}><IdCardIcon/></button>
         <button ref={b3} className={`island-btn ${tab==="medals"?"active":""}`} aria-label="Medal"  onClick={()=>onChange("medals")}><MedalIcon/></button>
@@ -355,14 +332,14 @@ function BottomIsland({ tab, onChange, dir }) {
   );
 }
 
-/* ========= Утилиты ========= */
+/* ========= УТИЛИТЫ ========= */
 function formatBirth(yyyy_mm_dd){ const d=new Date(yyyy_mm_dd+"T00:00:00"); return d.toLocaleDateString("ru-RU",{day:"numeric",month:"long",year:"numeric"}); }
 function shortDate(iso){ const ts=toLocalTimestamp(iso); const d=new Date(ts); return d.toLocaleDateString("ru-RU",{day:"2-digit",month:"2-digit",year:"numeric"}); }
 function toLocalTimestamp(input){ if(!input) return Date.now(); const hasTZ=/Z|[+-]\d{2}:?\d{2}$/.test(input); if(hasTZ) return new Date(input).getTime(); const [date,time="00:00:00"]=String(input).split("T"); const [y,m,d]=date.split("-").map(Number); const [hh,mm,ss]=time.split(":").map(Number); return new Date(y,(m||1)-1,d||1,hh||0,mm||0,ss||0,0).getTime(); }
 function msParts(ms){ let s=Math.max(0,Math.floor(ms/1000)); const days=Math.floor(s/86400); s-=days*86400; const hours=Math.floor(s/3600); s-=hours*3600; const minutes=Math.floor(s/60); s-=minutes*60; const seconds=s; return {days,hours,minutes,seconds}; }
 function formatParts(p){ const dd=p.days>0?`${p.days}д `:""; const hh=String(p.hours).padStart(2,"0"); const mm=String(p.minutes).padStart(2,"0"); const ss=String(p.seconds).padStart(2,"0"); return `${dd}${hh}:${mm}:${ss}`; }
 
-/* ========= SVG-иконки ========= */
+/* ========= SVG ICONS ========= */
 function BurgerIcon(){return(<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>);}
 function VibrationOnIcon(){return(<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="7" y="3" width="10" height="18" rx="2" stroke="currentColor" strokeWidth="2"/><path d="M2 8l2 2-2 2 2 2-2 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><path d="M22 8l-2 2 2 2-2 2 2 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>);}
 function VibrationOffIcon(){return(<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="7" y="3" width="10" height="18" rx="2" stroke="currentColor" strokeWidth="2"/><path d="M2 8l2 2-2 2 2 2-2 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity=".35"/><path d="M22 8l-2 2 2 2-2 2 2 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity=".35"/><path d="M5 5l14 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>);}
