@@ -2,29 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
-/* базовые */
-html, body {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  background:#0b1110;
-  color:#f9fafb;
-  font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-}
-*{box-sizing:border-box;}
-html{scroll-behavior:smooth;}
+/* ===== base ===== */
+html,body{margin:0;padding:0;height:100%;background:#0b1110;color:#f9fafb;font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
 
-.makan-layer{position:relative;z-index:30;}
-img[src$="makan.png"]{position:relative;z-index:30;}
-.jeb-layer{position:absolute;z-index:20;pointer-events:none;}
-img[src*="jeb"]{position:absolute;z-index:20;pointer-events:none;}
+/* слои */
+.makan-layer{position:relative;z-index:30}
+img[src$="makan.png"]{position:relative;z-index:30}
+.jeb-layer{position:absolute;z-index:20;pointer-events:none}
+img[src*="jeb"]{position:absolute;z-index:20;pointer-events:none}
 
 /* тень у ног */
-.makan-shadow::after{
-  content:"";position:absolute;bottom:0;left:50%;transform:translateX(-50%);
-  width:80%;height:35%;background:linear-gradient(to top, rgba(0,0,0,.7), transparent);
-  border-radius:50%;pointer-events:none;z-index:25;
-}
+.makan-shadow::after{content:"";position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:80%;height:35%;background:linear-gradient(to top, rgba(0,0,0,.7), transparent);border-radius:50%;pointer-events:none;z-index:25}
 
 /* вход/глоу/покачивание */
 @keyframes fade-up{0%{opacity:0;transform:translateY(12px)}100%{opacity:1;transform:translateY(0)}}
@@ -36,7 +26,7 @@ img[src*="jeb"]{position:absolute;z-index:20;pointer-events:none;}
 @keyframes wobble{0%,100%{transform:translateY(0) rotate(0)}25%{transform:translateY(-2px) rotate(-.6deg)}50%{transform:translateY(1px) rotate(.6deg)}75%{transform:translateY(-1px) rotate(-.4deg)}}
 .animate-wobble{animation:wobble 2.4s ease-in-out infinite;transform-origin:50% 100%}
 
-/* JEB png */
+/* JEB PNG */
 .jeb-img{mix-blend-mode:multiply;background:transparent}
 @keyframes fade-out{to{opacity:0;transform:translateY(-6px) scale(.98)}}
 .auto-fade-out{animation:fade-out .42s ease-out 2.4s forwards}
@@ -47,50 +37,58 @@ img[src*="jeb"]{position:absolute;z-index:20;pointer-events:none;}
 @keyframes arc-pop{0%{transform:translate(-50%,-10px) scale(.9);opacity:0}60%{opacity:1}100%{transform:translate(-50%,0) scale(1);opacity:1}}
 .animate-arc-pop{animation:arc-pop .6s cubic-bezier(.2,.9,.2,1) both}
 
-/* Glass UI — бургер и выпадающее */
-.glass-btn{
-  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-  background: rgba(255,255,255,0.08); color:#fff;
-  border:1px solid rgba(255,255,255,0.12); box-shadow:0 6px 20px rgba(0,0,0,.25);
-  transition: transform .15s ease, background .2s ease;
-}
-.glass-btn:active{transform:scale(.96)} .glass-btn:hover{background:rgba(255,255,255,.12)}
-.glass-menu{
-  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-  background: linear-gradient(180deg, rgba(24,24,27,.78), rgba(24,24,27,.55)); color:#fff;
-}
+/* glass — бургер */
+.glass-btn{backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.12);box-shadow:0 6px 20px rgba(0,0,0,.25);transition:transform .15s ease,background .2s ease}
+.glass-btn:active{transform:scale(.96)}.glass-btn:hover{background:rgba(255,255,255,.12)}
+.glass-menu{backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);background:linear-gradient(180deg,rgba(24,24,27,.78),rgba(24,24,27,.55));color:#fff}
 
-/* ───── Островок с каплей ───── */
-.island{
-  filter:url(#goo);
-  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-  background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.06));
-  border: 1px solid rgba(255,255,255,0.14);
-  box-shadow: 0 12px 40px rgba(0,0,0,.35);
-  display:flex;gap:0;position:relative;
-}
+/* ===== ОСТРОВОК С РЕАЛИСТИЧНОЙ КАПЛЕЙ ===== */
+.island{filter:url(#goo);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.06));border:1px solid rgba(255,255,255,.14);box-shadow:0 12px 40px rgba(0,0,0,.35);position:relative}
+.not-full{margin:0 auto}
 
-/* капля */
-.blob{
-  position:absolute; top:50%; transform:translate(-50%,-50%);
-  width:68px; height:56px; border-radius:28px;
-  background: rgba(255,255,255,0.14); box-shadow: inset 0 0 0 1px rgba(255,255,255,.18);
-  transition: left .34s cubic-bezier(.2,.9,.2,1), width .25s ease;
-}
-.blob-right{ animation: blobStretchRight .34s ease both; }
-.blob-left{  animation: blobStretchLeft  .34s ease both; }
+/* Кнопки внутри островка */
+.island-btn{height:56px;width:56px;display:grid;place-items:center;color:#e5e7eb;z-index:2;border-radius:20px;transition:color .2s ease, transform .12s ease}
+.island-btn.active{color:#5cc3ff}
+.island-btn:active{transform:translateY(1px) scale(.98)}
 
-@keyframes blobStretchRight{
-  0%{ width:68px } 50%{ width:110px } 100%{ width:68px }
+/* Капля — позиционируется по центру активной кнопки, ширина подгоняется под неё */
+.blob-real{
+  position:absolute;top:50%;
+  transform:translate(calc(var(--x) - 50%), -50%);
+  width:var(--w);height:56px;border-radius:28px;z-index:1;
+  background:rgba(255,255,255,.14);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.22), 0 6px 30px rgba(0,0,0,.35);
+  transition: transform .34s cubic-bezier(.2,.9,.2,1), width .25s ease;
+  overflow:hidden;
 }
-@keyframes blobStretchLeft{
-  0%{ width:68px } 50%{ width:110px } 100%{ width:68px }
+.blob-mounted{ /* лёгкая дыхалка */
+  animation: blob-breathe 4s ease-in-out infinite;
 }
+@keyframes blob-breathe{0%,100%{filter:saturate(100%)}50%{filter:saturate(115%)}}
 
-/* кнопки в островке */
-.island-btn{
-  height:56px; width:56px; display:grid; place-items:center;
-  color:#e5e7eb; z-index:1; border-radius:20px; transition: transform .12s ease, color .2s ease;
+/* растягивание по направлению */
+.stretch-r{animation: blobStretchRight .34s ease}
+.stretch-l{animation: blobStretchLeft .34s ease}
+@keyframes blobStretchRight{0%{width:var(--w)}50%{width:calc(var(--w) + 42px)}100%{width:var(--w)}}
+@keyframes blobStretchLeft {0%{width:var(--w)}50%{width:calc(var(--w) + 42px)}100%{width:var(--w)}}
+
+/* внутренние «переливы» — реалистичный liquid glass */
+.blob-core, .blob-spec{position:absolute;inset:0;pointer-events:none}
+.blob-core{
+  background:
+    radial-gradient(120% 80% at 50% -20%, rgba(255,255,255,.45), rgba(255,255,255,0) 55%),
+    radial-gradient(100% 60% at 50% 120%, rgba(0,0,0,.35), transparent 60%),
+    linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.06));
+  mix-blend-mode:screen;
+  opacity:.9;
 }
-.island-btn.active{ color:#fff }
-.island-btn:active{ transform: translateY(1px) scale(.98); }
+.blob-spec{
+  background:
+    radial-gradient(120px 60px at 50% 6px, rgba(255,255,255,.6), transparent 60%),
+    radial-gradient(180px 90px at 50% calc(100% - 8px), rgba(0,0,0,.35), transparent 60%),
+    conic-gradient(from 0deg, rgba(53,169,255,.45), rgba(255,85,131,.35), rgba(255,212,96,.4), rgba(53,169,255,.45));
+  mix-blend-mode:overlay;
+  filter: saturate(140%) blur(.2px);
+  opacity:.35;
+  border-radius:inherit;
+}
