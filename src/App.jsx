@@ -14,7 +14,7 @@ const PROFILE = {
   fitnessCategory: "А",
   assignment: "Может быть направлен в Семёновский полк (уточняется)",
 };
-const SERVICE_START = "2025-10-01T00:00:00";
+const SERVICE_START = "2025-11-28T00:00:00";
 const DEMOBIL_DATE  = "2026-10-01T00:00:00";
 
 /* ========= APP ========= */
