@@ -2,149 +2,192 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ===============================
-   БАЗА
-   =============================== */
+/* ================== БАЗА ================== */
 html, body {
   @apply bg-black text-white select-none overflow-x-hidden;
-  font-family: 'Inter','SF Pro Display',system-ui,sans-serif;
+  font-family: 'Inter', 'SF Pro Display', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
   -webkit-tap-highlight-color: transparent;
 }
-*,*::before,*::after { box-sizing: border-box; }
+
 button { @apply focus:outline-none; }
-.safe-bottom { padding-bottom: calc(16px + env(safe-area-inset-bottom,0px)); }
 
-/* ===============================
-   СЦЕНА / СЛОИ
-   =============================== */
-.makan-layer { position: relative; z-index: 10; }
-.jeb-layer   { position: relative; z-index: 6;  }
-.jeb-img     { image-rendering: -webkit-optimize-contrast; }
-
-/* Появления */
+/* ================== ГЛОБАЛЬНЫЕ АНИМАЦИИ ================== */
 .appear-scale { animation: appear-scale .6s cubic-bezier(.25,1,.5,1); }
-@keyframes appear-scale { 0%{transform:scale(.85);opacity:0} 100%{transform:scale(1);opacity:1} }
-.appear-fade-up { animation: appear-fade-up .6s cubic-bezier(.25,1,.5,1); }
-@keyframes appear-fade-up { 0%{transform:translateY(10px);opacity:0} 100%{transform:translateY(0);opacity:1} }
-
-.jeb-layer     { animation: fadein .35s ease-out forwards; }
-.auto-fade-out { animation: fadeout 2.2s ease-out forwards; }
-@keyframes fadein  { from{opacity:0} to{opacity:1} }
-@keyframes fadeout { 0%,90%{opacity:1} 100%{opacity:0} }
-
-/* ===============================
-   LIQUID ISLAND (кнопки, пузырёк, капля)
-   =============================== */
-.island{
-  /* единые параметры */
-  --d: 64px;        /* диаметр кнопок/пузырька/капли */
-  --offsetY: 0px;   /* общий сдвиг по Y, если нужно подправить */
-  --ix: 0px;        /* локальный сдвиг содержимого иконки по X */
-  --iy: 0px;        /* локальный сдвиг содержимого иконки по Y */
-
-  position: relative;
-  background: rgba(20,20,20,.75);
-  border: 1px solid rgba(255,255,255,.08);
-  box-shadow: 0 12px 40px rgba(0,0,0,.28);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-radius: 36px;
-  pointer-events: none;
+@keyframes appear-scale {
+  0% { transform: scale(.85); opacity: 0; }
+  100% { transform: scale(1);  opacity: 1; }
 }
-.island-compact { width: min(440px, 82vw); }
-.not-full { margin: 0 auto; }
 
-.island-row{
+.appear-fade-up { animation: appear-fade-up .6s cubic-bezier(.25,1,.5,1); }
+@keyframes appear-fade-up {
+  0% { transform: translateY(10px); opacity: 0; }
+  100% { transform: translateY(0);    opacity: 1; }
+}
+
+.glow-enter { animation: glow-enter 2s ease-out forwards; }
+@keyframes glow-enter {
+  0%   { opacity: 0; transform: scale(1.2); }
+  100% { opacity: 1; transform: scale(1);   }
+}
+
+/* ================== PNG-НАДПИСИ ================== */
+.jeb-layer { animation: fadein .35s ease-out forwards; }
+.auto-fade-out { animation: fadeout 2.4s ease-out forwards; }
+@keyframes fadein   { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fadeout  { 0% {opacity:1;} 92% {opacity:1;} 100% {opacity:0;} }
+
+.jeb-img { image-rendering: -webkit-optimize-contrast; }
+
+/* Появление слева снизу (1) */
+.animate-rise-left { animation: rise-left 2.2s cubic-bezier(.25,1,.3,1) forwards; }
+@keyframes rise-left {
+  0%   { opacity: 0; transform: translateY(22px) rotate(-4deg); }
+  14%  { opacity: 1; transform: translateY(0)     rotate(0);    }
+  86%  { opacity: 1; transform: translateY(-3px); }
+  100% { opacity: 0; transform: translateY(-10px);}
+}
+
+/* Вылет справа (2) */
+.animate-slide-from-right { animation: slide-right 2.2s cubic-bezier(.25,1,.3,1) forwards; }
+@keyframes slide-right {
+  0%   { opacity: 0; transform: translateX(40px) rotate(2deg); }
+  16%  { opacity: 1; transform: translateX(0)    rotate(0);    }
+  86%  { opacity: 1; }
+  100% { opacity: 0; transform: translateX(18px); }
+}
+
+/* ================== МАКАН ================== */
+.makan-shadow { filter: drop-shadow(0 18px 50px rgba(0,0,0,.65)); }
+.animate-wobble { animation: wobble 2.4s ease-in-out infinite; }
+@keyframes wobble {
+  0%,100% { transform: rotate(0deg); }
+  50%     { transform: rotate(.4deg); }
+}
+
+/* ================== СТЕКЛО КНОПОК/МЕНЮ ================== */
+.glass-btn {
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.12);
+  box-shadow: 0 6px 18px rgba(0,0,0,.45);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: background .2s, transform .2s;
+}
+.glass-btn:active { background: rgba(255,255,255,.12); transform: scale(.96); }
+
+.glass-menu {
+  background: rgba(18,18,18,.85);
+  border: 1px solid rgba(255,255,255,.12);
+  box-shadow: 0 16px 40px rgba(0,0,0,.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* =========================================================
+   НИЖНИЙ «ОСТРОВОК»: всегда видимые иконки + пузырёк + капля
+   ========================================================= */
+
+/* Контейнер с закруглением/стеклом задаётся utility-классами в JSX */
+
+/* Ряд кнопок */
+.ui-row{
   position: relative;
-  height: calc(var(--d) + 28px);
+  height: 100%;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 18px;
-  pointer-events: none;
+  justify-content: space-around;
+  gap: 16px;
+  padding: 0 6px;
 }
 
-/* КНОПКА-ИКОНКА — строго центр по (x0,y0) */
-.island-btn{
-  position: relative;
-  z-index: 5;              /* выше пузыря/капли */
-  pointer-events: auto;
+/* Кнопка-иконка — всегда видна, без серых подложек */
+.ui-btn{
+  --d: 54px;               /* диаметр кнопки можно переопределять через style */
+  width: var(--d);
   height: var(--d);
-  width:  var(--d);
-  border-radius: 50%;
-  display: block;          /* для абсолютного позиционирования содержимого */
-  color: #fff;
-  transform: translateZ(0);
-  transition: transform .15s ease;
+  display: grid;
+  place-items: center;
+  border-radius: 9999px;
+  color: #eef2f6;
+  opacity: .95;
+  transition: transform .12s ease, opacity .2s ease;
+  will-change: transform;
 }
-.island-btn:active { transform: scale(.96); }
+.ui-btn:active{ transform: scale(.96); }
+.ui-btn svg{ width: 28px; height: 28px; display: block; }
 
-/* Содержимое иконки — строго в центр круга с тонкой подстройкой var(--ix/--iy) */
-.island-btn > svg,
-.island-btn > img,
-.island-btn > i{
+/* Пузырёк вокруг активной иконки — ИДЕАЛЬНЫЙ КРУГ */
+.ui-bubble{
   position: absolute;
-  left: 50%; top: 50%;
-  transform: translate(calc(-50% + var(--ix)), calc(-50% + var(--iy)));
-  width: 28px; height: 28px;
-  display: block; line-height: 0;
-  filter: none; pointer-events: none;
-  stroke: currentColor; fill: none; stroke-width: 2px;
+  top: 50%;
+  left: 0;
+  width: var(--w, 54px);
+  height: var(--w, 54px);
+  transform: translateX(calc(var(--x, 0px) - 50%)) translateY(-50%);
+  border-radius: 9999px;
+  pointer-events: none;
+  z-index: 3;
+  transition:
+    transform 360ms cubic-bezier(.22,.76,.25,1),
+    width     360ms cubic-bezier(.22,.76,.25,1),
+    height    360ms cubic-bezier(.22,.76,.25,1);
 }
+.bubble-mounted{ transition-delay: 8ms; }
 
-/* никаких подложек у кнопок */
-.island-btn::before, .island-btn::after { content: none !important; display: none !important; }
-.island-btn.active { transform: translateY(-1px) scale(1.04); }
-
-/* ПУЗЫРЁК (под иконкой, идеально круглый) */
-.active-bubble{
+.ui-bubble-core{
   position: absolute;
-  top: 50%; left: 0;
-  height: var(--d); width: var(--d);
-  border-radius: 50%;
-  transform: translateX(calc(var(--x,0px) - 50%)) translateY(calc(-50% - var(--offsetY)));
-  z-index: 3; pointer-events: none; will-change: transform;
-  transition: transform 420ms cubic-bezier(.22,.76,.25,1);
-}
-.active-bubble-core{
-  position: absolute; inset: 0; border-radius: 50%;
-  background: radial-gradient(100% 100% at 50% 50%,
-    rgba(255,255,255,.18) 0%,
-    rgba(255,255,255,.08) 55%,
-    rgba(255,255,255,.03) 100%);
-  border: 1px solid rgba(255,255,255,.12);
-  box-shadow: 0 8px 18px rgba(0,0,0,.22);
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(120% 100% at 50% 8%,
+              rgba(255,255,255,.36),
+              rgba(255,255,255,.10) 44%,
+              rgba(255,255,255,.06) 100%);
+  border: 1px solid rgba(255,255,255,.28);
+  box-shadow:
+    inset 0 1px 8px rgba(255,255,255,.26),
+    inset 0 -14px 26px rgba(0,0,0,.28),
+    0 10px 24px rgba(0,0,0,.28);
 }
 
-/* КАПЛЯ (едет вместе с пузырьком, круглая) */
-.blob-real{
+/* КАПЛЯ под иконками — тоже круг, «перетекает» между центрами */
+.ui-blob{
   position: absolute;
-  top: 50%; left: 0;
-  height: var(--d); width: var(--d);
-  border-radius: 50%;
-  transform: translateX(calc(var(--x,0px) - 50%)) translateY(calc(-50% - var(--offsetY)));
-  transition: transform 440ms cubic-bezier(.23,.86,.2,1);
-  z-index: 2; pointer-events: none; will-change: transform;
+  top: 50%;
+  left: 0;
+  width: var(--w, 54px);
+  height: var(--w, 54px);
+  transform: translateX(calc(var(--x, 0px) - 50%)) translateY(-50%);
+  border-radius: 9999px;
+  pointer-events: none;
+  z-index: 1;
+  transition:
+    transform 420ms cubic-bezier(.23,.86,.2,1),
+    width     420ms cubic-bezier(.23,.86,.2,1),
+    height    420ms cubic-bezier(.23,.86,.2,1);
 }
-.blob-core{
-  position: absolute; inset: 0; border-radius: 50%;
-  background: radial-gradient(100% 100% at 50% 50%,
-    rgba(255,255,255,.14) 0%,
-    rgba(255,255,255,.06) 55%,
-    rgba(255,255,255,.03) 100%);
-  border: 1px solid rgba(255,255,255,.12);
-  box-shadow: 0 10px 22px rgba(0,0,0,.22);
-}
-.blob-spec { display: none; }
+.blob-mounted{ transition-delay: 16ms; }
 
-/* Фолбэк без blur */
-@supports not ((-webkit-backdrop-filter: none) or (backdrop-filter: none)){
-  .island{ background: rgba(25,27,29,.92); }
+.ui-blob-core{
+  position: absolute; inset: 0; border-radius: inherit;
+  background: radial-gradient(100% 120% at 50% 12%,
+              rgba(255,255,255,.24),
+              rgba(255,255,255,.10) 45%,
+              rgba(255,255,255,.06) 100%);
+  border: 1px solid rgba(255,255,255,.18);
+  border-bottom-color: rgba(0,0,0,.18);
+  box-shadow:
+    inset 0 1px 6px rgba(255,255,255,.24),
+    inset 0 -12px 22px rgba(0,0,0,.22),
+    0 10px 22px rgba(0,0,0,.25);
 }
 
-/* Адаптив */
-@media (max-width: 360px){
-  .island{ --d: 60px; }
-  .island-row{ height: calc(var(--d) + 26px); gap: 14px; }
-  .island-btn > svg, .island-btn > img, .island-btn > i{ width: 26px; height: 26px; }
+/* ===== Доп. косметика, чтобы иконки были строго по центру круга ===== */
+.ui-btn > svg {
+  transform: translateY(0);   /* гарантированный центр без смещения вниз */
 }
+
+/* ================== ХЕЛПЕРЫ ДЛЯ Z-INDEX (если пригодится) ================== */
+/* .above-all { position: relative; z-index: 999; } */
+/* .below-makan { position: relative; z-index: 4; }  /* PNG-надписи мы кладём ниже Макана */
+
+/* Конец файла */
