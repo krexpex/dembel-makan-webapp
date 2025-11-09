@@ -444,15 +444,15 @@ export default function App() {
         )}
       </main>
 
-      {/* Бургер-меню слева снизу */}
-      <div
-        className={`fixed left-4 bottom-20 z-[60] transition-all duration-300 ${
+            {/* Бургер-меню в стиле островка */}
+            <div
+        className={`fixed left-4 bottom-[calc(16px+env(safe-area-inset-bottom,0px))] z-[60] transition-all duration-300 ${
           burgerHidden ? "translate-y-14 opacity-0" : "translate-y-0 opacity-100"
         }`}
       >
         <button
           onClick={() => setMenuOpen((o) => !o)}
-          className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-full border-2 border-white/20 flex flex-col items-center justify-center gap-1.5 hover:bg-white/15 transition-all duration-300 hover:scale-105 shadow-lg"
+          className="w-12 h-12 bg-[rgba(20,20,20,.85)] backdrop-blur-xl rounded-2xl border border-white/15 shadow-[0_8px_32px_rgba(0,0,0,.35)] flex flex-col items-center justify-center gap-1.5 hover:bg-white/10 transition-all duration-300 hover:scale-105"
           aria-label="menu"
         >
           <div className={`w-5 h-0.5 bg-white rounded-full transition-all duration-300 ${menuOpen ? 'rotate-45 translate-y-1.5' : ''}`}></div>
@@ -461,7 +461,7 @@ export default function App() {
         </button>
 
         {menuOpen && (
-          <div className="absolute left-0 bottom-14 mb-2 w-48 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 p-3 shadow-xl">
+          <div className="absolute left-0 bottom-14 mb-2 w-48 bg-[rgba(20,20,20,.95)] backdrop-blur-xl rounded-2xl border border-white/15 p-3 shadow-[0_8px_32px_rgba(0,0,0,.35)]">
             <nav className="flex flex-col space-y-2">
               <button
                 onClick={toggleVibration}
@@ -472,10 +472,10 @@ export default function App() {
                   {vibrateEnabled ? "Выключить вибрацию" : "Включить вибрацию"}
                 </span>
               </button>
-              <a href="#" className="text-white hover:text-purple-200 transition-colors text-sm font-medium py-2 px-3 rounded-lg hover:bg-white/10">
+              <a href="#" className="text-white hover:text-emerald-300 transition-colors text-sm font-medium py-2 px-3 rounded-lg hover:bg-white/10">
                 О проекте
               </a>
-              <a href="#" className="text-white hover:text-purple-200 transition-colors text-sm font-medium py-2 px-3 rounded-lg hover:bg-white/10">
+              <a href="#" className="text-white hover:text-emerald-300 transition-colors text-sm font-medium py-2 px-3 rounded-lg hover:bg-white/10">
                 Помощь
               </a>
             </nav>
