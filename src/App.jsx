@@ -543,7 +543,7 @@ function SoldierCard({ profile, service }) {
   );
 }
 
-/* ========= ОСТРОВОК — только иконки ========= */
+/* ========= ОСТРОВОК — компактный, только иконки ========= */
 function BottomIsland({ tab, onChange, dir }) {
   const contRef = useRef(null);
   const b1 = useRef(null),
@@ -551,7 +551,7 @@ function BottomIsland({ tab, onChange, dir }) {
     b3 = useRef(null);
 
   // диаметр пузырька/капли и самих кнопок
-  const D = 54;
+  const D = 50; // уменьшил с 54 до 50
 
   const [bubble, setBubble] = useState({ x: 0, w: D });
   const [blob, setBlob] = useState({ x: 0, w: D });
@@ -571,7 +571,7 @@ function BottomIsland({ tab, onChange, dir }) {
     setMounted(true);
     const recalc = () => {
       const { x, w } = centerOf(currentBtn(tab));
-      const size = Math.max(48, Math.min(D, w));
+      const size = Math.max(46, Math.min(D, w)); // уменьшил минимальный размер
       setBubble({ x, w: size });
       setBlob({ x, w: size });
     };
@@ -585,17 +585,17 @@ function BottomIsland({ tab, onChange, dir }) {
 
   useEffect(() => {
     const { x, w } = centerOf(currentBtn(tab));
-    const size = Math.max(48, Math.min(D, w));
+    const size = Math.max(46, Math.min(D, w));
     setBubble({ x, w: size });
     setBlob({ x, w: size });
   }, [tab]);
 
   return (
-    <nav className="fixed left-0 right-0 bottom-[calc(12px+env(safe-area-inset-bottom,0px))] z-[55] flex justify-center px-4 pointer-events-none">
+    <nav className="fixed left-0 right-0 bottom-[calc(16px+env(safe-area-inset-bottom,0px))] z-[55] flex justify-end px-4 pointer-events-none">
       <div
         ref={contRef}
-        className="pointer-events-auto rounded-[32px] bg-[rgba(20,20,20,.78)] border border-white/10 shadow-[0_12px_40px_rgba(0,0,0,.28)] backdrop-blur-xl px-4"
-        style={{ width: "min(420px, 82vw)", height: 68 }}
+        className="pointer-events-auto rounded-[28px] bg-[rgba(20,20,20,.85)] border border-white/15 shadow-[0_8px_32px_rgba(0,0,0,.35)] backdrop-blur-xl px-3"
+        style={{ width: "min(380px, 75vw)", height: 62 }} // уменьшил ширину и высоту
       >
         {/* Пузырёк над активной иконкой */}
         <div
@@ -616,7 +616,7 @@ function BottomIsland({ tab, onChange, dir }) {
         </div>
 
         {/* Кнопки — без лишних эффектов, всегда видны */}
-        <div className="ui-row" style={{ height: 68 }}>
+        <div className="ui-row" style={{ height: 62 }}>
           <button
             ref={b1}
             className={`ui-btn ${tab === "timer" ? "active" : ""}`}
