@@ -7,6 +7,7 @@ import React, {
   useState,
 } from "react";
 import confetti from "canvas-confetti";
+import { ACHIEVEMENTS } from './achievements';
 
 /* ========= ДАННЫЕ ========= */
 const NICK = "Макан";
@@ -26,35 +27,6 @@ const PROFILE = {
 // Старт от 28 ноября 2025
 const SERVICE_START = "2025-11-28T00:00:00";
 const DEMOBIL_DATE = "2026-10-01T00:00:00";
-
-// Достижения - легко добавлять новые
-const ACHIEVEMENTS = [
-  {
-    id: 1,
-    title: "Заявление об уходе в армию",
-    description: "Макан официально объявил о начале военной службы",
-    date: "2025-10-17",
-    icon: "🎤",
-    unlocked: true
-  },
-  {
-    id: 2, 
-    title: "Медицинская комиссия",
-    description: "Пройдена медкомиссия и получена категория годности А",
-    date: "2025-10-25",
-    icon: "🏥", 
-    unlocked: true
-  },
-  // Просто добавь новый объект сюда когда будет новое событие
-  // {
-  //   id: 3,
-  //   title: "Название события",
-  //   description: "Описание что произошло", 
-  //   date: "2025-11-20",
-  //   icon: "🎯",
-  //   unlocked: true
-  // }
-];
 
 /* ========= APP ========= */
 export default function App() {
@@ -470,7 +442,7 @@ export default function App() {
 
       {/* Бургер-меню в стиле островка */}
       <div
-        className={`fixed left-4 bottom-[calc(26px+env(safe-area-inset-bottom,0px))] z-[60] transition-all duration-300 ${
+        className={`fixed left-4 bottom-[calc(39px+env(safe-area-inset-bottom,0px))] z-[60] transition-all duration-300 ${
           burgerHidden ? "translate-y-14 opacity-0" : "translate-y-0 opacity-100"
         }`}
       >
