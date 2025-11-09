@@ -1,3 +1,4 @@
+// src/App.jsx
 import React, {
   useEffect,
   useLayoutEffect,
@@ -125,6 +126,11 @@ export default function App() {
   const leftParts = msParts(leftMs);
   const isOver = leftMs <= 0 && totalMs > 0;
 
+  // Новый расчет: отсчет до начала службы
+  const timeUntilStartMs = Math.max(0, startTs - now);
+  const timeUntilStartParts = msParts(timeUntilStartMs);
+  const isServiceStarted = timeUntilStartMs <= 0;
+
   useEffect(() => {
     if (isOver && !confettiDoneRef.current) {
       confettiDoneRef.current = true;
@@ -197,9 +203,15 @@ export default function App() {
   }
 
   function share() {
-    const text = isOver
-      ? `🎉 ${NICK} ДЕМБЕЛЬНУЛСЯ!\n\nСлужба завершена.`
-      : `⏳ До дембеля ${NICK}: ${formatParts(leftParts)}.\nПрисоединяйся к отсчёту!`;
+    let text;
+    if (isOver) {
+      text = `🎉 ${NICK} ДЕМБЕЛЬНУЛСЯ!\n\nСлужба завершена.`;
+    } else if (isServiceStarted) {
+      text = `⏳ До дембеля ${NICK}: ${formatParts(leftParts)}.\nПрисоединяйся к отсчёту!`;
+    } else {
+      text = `⏳ До начала службы ${NICK}: ${formatParts(timeUntilStartParts)}.\nПрисоединяйся к отсчёту!`;
+    }
+    
     const url = window.location.href.split("?")[0];
     const twa = window.Telegram?.WebApp;
 
@@ -239,8 +251,10 @@ export default function App() {
   const gapLen = Math.max(4, segmentLen * 0.08);
   const dashPattern = `${segmentLen - gapLen} ${gapLen}`;
 
+  // Прогресс для кольца (только когда служба началась)
+  const progressPct = isServiceStarted ? pct : 0;
   const progressDashArray = C;
-  const progressDashOffset = C * (1 - pct / 100);
+  const progressDashOffset = C * (1 - progressPct / 100);
   const animatedProgressOffset = entered ? progressDashOffset : C;
 
   const clipStyle = {
@@ -250,31 +264,41 @@ export default function App() {
   /* — рендер — */
   return (
     <div className="min-h-screen w-full bg-gradient-to-b from-[#0f1514] to-[#0b1110] text-zinc-50">
-      {/* Бургер */}
+      {/* Бургер-меню слева */}
       <div
-        className={`fixed left-3 top-3 z-[60] transition-transform duration-250 ${
+        className={`fixed left-4 top-4 z-[60] transition-all duration-300 ${
           burgerHidden ? "-translate-y-14 opacity-0" : "translate-y-0 opacity-100"
         }`}
       >
         <button
           onClick={() => setMenuOpen((o) => !o)}
-          className="glass-btn h-11 w-11 grid place-items-center rounded-2xl"
+          className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-full border-2 border-white/20 flex flex-col items-center justify-center gap-1.5 hover:bg-white/15 transition-all duration-300 hover:scale-105 shadow-lg"
           aria-label="menu"
         >
-          <BurgerIcon />
+          <div className={`w-5 h-0.5 bg-white rounded-full transition-all duration-300 ${menuOpen ? 'rotate-45 translate-y-1.5' : ''}`}></div>
+          <div className={`w-5 h-0.5 bg-white rounded-full transition-all duration-300 ${menuOpen ? 'opacity-0' : 'opacity-100'}`}></div>
+          <div className={`w-5 h-0.5 bg-white rounded-full transition-all duration-300 ${menuOpen ? '-rotate-45 -translate-y-1.5' : ''}`}></div>
         </button>
 
         {menuOpen && (
-          <div className="mt-2 w-60 glass-menu rounded-2xl p-2 shadow-xl border border-white/10">
-            <button
-              onClick={toggleVibration}
-              className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/8 transition-colors"
-            >
-              {vibrateEnabled ? <VibrationOnIcon /> : <VibrationOffIcon />}
-              <span className="text-sm">
-                {vibrateEnabled ? "Выключить вибрацию" : "Включить вибрацию"}
-              </span>
-            </button>
+          <div className="absolute left-0 top-14 mt-2 w-48 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 p-3 shadow-xl">
+            <nav className="flex flex-col space-y-2">
+              <button
+                onClick={toggleVibration}
+                className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/10 transition-colors text-white text-left"
+              >
+                {vibrateEnabled ? <VibrationOnIcon /> : <VibrationOffIcon />}
+                <span className="text-sm">
+                  {vibrateEnabled ? "Выключить вибрацию" : "Включить вибрацию"}
+                </span>
+              </button>
+              <a href="#" className="text-white hover:text-purple-200 transition-colors text-sm font-medium py-2 px-3 rounded-lg hover:bg-white/10">
+                О проекте
+              </a>
+              <a href="#" className="text-white hover:text-purple-200 transition-colors text-sm font-medium py-2 px-3 rounded-lg hover:bg-white/10">
+                Помощь
+              </a>
+            </nav>
           </div>
         )}
       </div>
@@ -282,7 +306,7 @@ export default function App() {
       {/* Контент */}
       <main className="mx-auto max-w-6xl p-4 pb-[calc(120px+env(safe-area-inset-bottom,0px))]">
         {tab === "timer" && (
-          <section className="relative flex flex-col items-center justify-center rounded-3xl bg-zinc-900/60 backdrop-blur p-5 md:p-6 shadow-xl overflow-hidden">
+          <section className="relative flex flex-col items-center justify-center rounded-3xl bg-zinc-900/60 backdrop-blur p-5 md:p-6 shadow-xl overflow-hidden ml-12">
             <div
               aria-hidden
               className={`absolute inset-0 -z-10 ${entered ? "glow-enter" : ""}`}
@@ -317,20 +341,22 @@ export default function App() {
                   strokeDasharray={dashPattern}
                   transform={`rotate(-90 ${size / 2} ${size / 2})`}
                 />
-                {/* прогресс */}
-                <circle
-                  cx={size / 2}
-                  cy={size / 2}
-                  r={r}
-                  fill="none"
-                  stroke="rgba(255,255,255,0.95)"
-                  strokeWidth={stroke}
-                  strokeLinecap="round"
-                  strokeDasharray={progressDashArray}
-                  strokeDashoffset={animatedProgressOffset}
-                  transform={`rotate(-90 ${size / 2} ${size / 2})`}
-                  style={{ transition: "stroke-dashoffset 900ms ease" }}
-                />
+                {/* прогресс (только когда служба началась) */}
+                {isServiceStarted && (
+                  <circle
+                    cx={size / 2}
+                    cy={size / 2}
+                    r={r}
+                    fill="none"
+                    stroke="rgba(255,255,255,0.95)"
+                    strokeWidth={stroke}
+                    strokeLinecap="round"
+                    strokeDasharray={progressDashArray}
+                    strokeDashoffset={animatedProgressOffset}
+                    transform={`rotate(-90 ${size / 2} ${size / 2})`}
+                    style={{ transition: "stroke-dashoffset 900ms ease" }}
+                  />
+                )}
               </svg>
 
               {/* PNG надписи, клипнутые кругом */}
@@ -382,7 +408,7 @@ export default function App() {
                 <div className="text-2xl md:text-4xl font-extrabold">
                   🎉 {NICK} ДЕМБЕЛЬНУЛСЯ!
                 </div>
-              ) : (
+              ) : isServiceStarted ? (
                 <>
                   <h1 className="text-lg md:text-xl font-semibold text-zinc-300">
                     До дембеля {NICK}
@@ -394,22 +420,39 @@ export default function App() {
                     Таймзона: {tz}
                   </div>
                 </>
+              ) : (
+                <>
+                  <h1 className="text-lg md:text-xl font-semibold text-zinc-300">
+                    До начала службы {NICK}
+                  </h1>
+                  <div className="text-2xl md:text-4xl font-extrabold tracking-tight mt-1">
+                    {formatParts(timeUntilStartParts)}
+                  </div>
+                  <div className="text-xs md:text-sm text-zinc-400 mt-1">
+                    Таймзона: {tz}
+                  </div>
+                </>
               )}
             </div>
 
-            <div className="w-full max-w-xl h-3 bg-zinc-800 rounded-full overflow-hidden mt-3">
-              <div className="h-full bg-white/80" style={{ width: `${pct}%` }} />
-            </div>
-            <div className="text-xs text-zinc-300 mt-1">
-              Выполнено службы: {pct.toFixed(2)}%
-            </div>
+            {/* Прогресс-бар (только когда служба началась) */}
+            {isServiceStarted && !isOver && (
+              <>
+                <div className="w-full max-w-xl h-3 bg-zinc-800 rounded-full overflow-hidden mt-3">
+                  <div className="h-full bg-white/80" style={{ width: `${pct}%` }} />
+                </div>
+                <div className="text-xs text-zinc-300 mt-1">
+                  Выполнено службы: {pct.toFixed(2)}%
+                </div>
+              </>
+            )}
 
             <div className="flex flex-col items-center gap-3 mt-4">
               <button
                 onClick={share}
                 className="px-4 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 font-medium"
               >
-                Поделиться таймером
+                Поделиться
               </button>
               <button
                 onClick={openGroup}
@@ -422,7 +465,7 @@ export default function App() {
         )}
 
         {tab === "id" && (
-          <section className="rounded-3xl bg-[rgba(24,24,27,0.85)] shadow-xl p-4 md:p-6 border border-zinc-800/60 max-w-2xl mx-auto">
+          <section className="rounded-3xl bg-[rgba(24,24,27,0.85)] shadow-xl p-4 md:p-6 border border-zinc-800/60 max-w-2xl mx-auto ml-12">
             <SoldierCard
               profile={PROFILE}
               service={{ start: SERVICE_START, end: DEMOBIL_DATE }}
@@ -431,7 +474,7 @@ export default function App() {
         )}
 
         {tab === "medals" && (
-          <section className="rounded-3xl bg-zinc-900/60 backdrop-blur p-6 shadow-xl border border-zinc-800/60 max-w-2xl mx-auto text-center">
+          <section className="rounded-3xl bg-zinc-900/60 backdrop-blur p-6 shadow-xl border border-zinc-800/60 max-w-2xl mx-auto text-center ml-12">
             <div className="text-xl font-semibold mb-2">Достижения</div>
             <div className="text-zinc-400 text-sm">
               Скоро здесь появятся медали и трофеи.
