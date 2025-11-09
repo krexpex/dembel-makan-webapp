@@ -442,7 +442,7 @@ export default function App() {
 
       {/* Бургер-меню в стиле островка */}
       <div
-        className={`fixed left-4 bottom-[calc(39px+env(safe-area-inset-bottom,0px))] z-[60] transition-all duration-300 ${
+        className={`fixed left-4 bottom-[calc(23px+env(safe-area-inset-bottom,0px))] z-[60] transition-all duration-300 ${
           burgerHidden ? "translate-y-14 opacity-0" : "translate-y-0 opacity-100"
         }`}
       >
