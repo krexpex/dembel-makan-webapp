@@ -265,9 +265,9 @@ export default function App() {
   return (
     <div className="min-h-screen w-full bg-gradient-to-b from-[#0f1514] to-[#0b1110] text-zinc-50">
       {/* Контент */}
-      <main className="mx-auto max-w-6xl p-4 pb-[calc(120px+env(safe-area-inset-bottom,0px))]">
+      <main className="mx-auto max-w-6xl p-4 pb-[calc(140px+env(safe-area-inset-bottom,0px))]">
         {tab === "timer" && (
-          <section className="relative flex flex-col items-center justify-center rounded-3xl bg-zinc-900/60 backdrop-blur p-5 md:p-6 shadow-xl overflow-hidden ml-12">
+          <section className="relative flex flex-col items-center justify-center rounded-3xl bg-zinc-900/60 backdrop-blur p-5 md:p-6 shadow-xl overflow-hidden">
             <div
               aria-hidden
               className={`absolute inset-0 -z-10 ${entered ? "glow-enter" : ""}`}
@@ -426,7 +426,7 @@ export default function App() {
         )}
 
         {tab === "id" && (
-          <section className="rounded-3xl bg-[rgba(24,24,27,0.85)] shadow-xl p-4 md:p-6 border border-zinc-800/60 max-w-2xl mx-auto ml-12">
+          <section className="rounded-3xl bg-[rgba(24,24,27,0.85)] shadow-xl p-4 md:p-6 border border-zinc-800/60 max-w-2xl mx-auto">
             <SoldierCard
               profile={PROFILE}
               service={{ start: SERVICE_START, end: DEMOBIL_DATE }}
@@ -435,7 +435,7 @@ export default function App() {
         )}
 
         {tab === "medals" && (
-          <section className="rounded-3xl bg-zinc-900/60 backdrop-blur p-6 shadow-xl border border-zinc-800/60 max-w-2xl mx-auto text-center ml-12">
+          <section className="rounded-3xl bg-zinc-900/60 backdrop-blur p-6 shadow-xl border border-zinc-800/60 max-w-2xl mx-auto text-center">
             <div className="text-xl font-semibold mb-2">Достижения</div>
             <div className="text-zinc-400 text-sm">
               Скоро здесь появятся медали и трофеи.
@@ -446,7 +446,7 @@ export default function App() {
 
       {/* Бургер-меню слева снизу */}
       <div
-        className={`fixed left-4 bottom-4 z-[60] transition-all duration-300 ${
+        className={`fixed left-4 bottom-20 z-[60] transition-all duration-300 ${
           burgerHidden ? "translate-y-14 opacity-0" : "translate-y-0 opacity-100"
         }`}
       >
