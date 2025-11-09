@@ -45,41 +45,17 @@ export const ACHIEVEMENTS = [
   {
     id: 6,
     title: "Начало службы",
-    description: "Первый день военной службы",
-    date: "2025-11-28",
+    description: "Запуск системы достижений",
+    date: "2025-11-09",
     icon: "🎖️",
     unlocked: false
   },
   {
     id: 7,
-    title: "Курс молодого бойца",
-    description: "Завершён начальный этап подготовки",
-    date: "2025-12-20",
-    icon: "🎯",
-    unlocked: false
-  },
-  {
-    id: 8,
-    title: "Первое увольнение",
-    description: "Первое посещение дома за время службы",
-    date: "2026-01-15",
-    icon: "🏠",
-    unlocked: false
-  },
-  {
-    id: 9,
-    title: "50% службы",
-    description: "Половина пути пройдена!",
-    date: "2026-04-15", 
-    icon: "🎉",
-    unlocked: false
-  },
-  {
-    id: 10,
-    title: "Дембель",
-    description: "Служба завершена! Макан свободен!",
-    date: "2026-10-01",
-    icon: "🎊",
+    title: "Начало службы",
+    description: "Первый день военной службы",
+    date: "2025-11-28",
+    icon: "🎖️",
     unlocked: false
   }
 ];

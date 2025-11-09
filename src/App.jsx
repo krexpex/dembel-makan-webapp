@@ -9,6 +9,8 @@ import React, {
 import confetti from "canvas-confetti";
 import { ACHIEVEMENTS } from './achievements';
 
+
+
 /* ========= ДАННЫЕ ========= */
 const NICK = "Макан";
 const PROFILE = {
@@ -52,13 +54,45 @@ export default function App() {
   // макан tap pop
   const [popped, setPopped] = useState(false);
 
-  // PNG-надписи (триггеры 3, 7, 10 тапов)
+  // PNG-надписи (система очереди с лимитом)
   const [tapCount, setTapCount] = useState(0);
-  const [show1, setShow1] = useState(false);
-  const [show2, setShow2] = useState(false);
-  const [show3, setShow3] = useState(false);
+  const [activePopups, setActivePopups] = useState([]);
+  const [popupQueue, setPopupQueue] = useState([]);
+  const popupLimit = 3; // Максимум одновременно активных надписей
+  const popupConfigs = [
+    { id: 1, src: "/jeb1.png", className: "popup-left", trigger: 3 },
+    { id: 2, src: "/jeb2.png", className: "popup-right", trigger: 7 },
+    { id: 3, src: "/jeb3.png", className: "popup-top", trigger: 10 },
+    { id: 4, src: "/jeb1.png", className: "popup-left", trigger: 15 },
+    { id: 5, src: "/jeb2.png", className: "popup-right", trigger: 20 },
+    { id: 6, src: "/jeb3.png", className: "popup-top", trigger: 25 },
+  ];
 
   const confettiDoneRef = useRef(false);
+  
+  // Новое состояние для уведомлений о достижениях
+  const [achievementNotification, setAchievementNotification] = useState(false);
+  const [lastAchievementDate, setLastAchievementDate] = useState(null);
+
+  // Функция для обработки очереди
+  const processQueue = () => {
+    if (popupQueue.length > 0 && activePopups.length < popupLimit) {
+      const nextPopup = popupQueue[0];
+      const newPopup = {
+        ...nextPopup,
+        instanceId: Date.now() + Math.random()
+      };
+      
+      setActivePopups(prev => [...prev, newPopup]);
+      setPopupQueue(prev => prev.slice(1));
+      
+      // Автоудаление через 4 секунды (вместо 2.4)
+      setTimeout(() => {
+        setActivePopups(prev => prev.filter(p => p.instanceId !== newPopup.instanceId));
+        processQueue(); // Рекурсивно обрабатываем очередь
+      }, 4000);
+    }
+  };
 
   /* — системные эффекты — */
   useEffect(() => {
@@ -96,25 +130,31 @@ export default function App() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // авто-скрытие PNG
+  // Проверка достижений при загрузке и ежедневно
   useEffect(() => {
-    if (show1) {
-      const t = setTimeout(() => setShow1(false), 2400);
-      return () => clearTimeout(t);
+    checkAchievements();
+    
+    // Проверяем каждые 10 минут на случай, если пользователь оставит приложение открытым
+    const interval = setInterval(checkAchievements, 10 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [now]);
+
+  function checkAchievements() {
+    const today = new Date().toDateString();
+    const hasUnlockedToday = ACHIEVEMENTS.some(achievement => 
+      achievement.unlocked && new Date(achievement.date).toDateString() === today
+    );
+
+    if (hasUnlockedToday && lastAchievementDate !== today) {
+      setAchievementNotification(true);
+      setLastAchievementDate(today);
+      
+      // Автоматически скрываем уведомление через 5 секунд
+      setTimeout(() => {
+        setAchievementNotification(false);
+      }, 5000);
     }
-  }, [show1]);
-  useEffect(() => {
-    if (show2) {
-      const t = setTimeout(() => setShow2(false), 2400);
-      return () => clearTimeout(t);
-    }
-  }, [show2]);
-  useEffect(() => {
-    if (show3) {
-      const t = setTimeout(() => setShow3(false), 2400);
-      return () => clearTimeout(t);
-    }
-  }, [show3]);
+  }
 
   /* — время службы — */
   const startTs = useMemo(() => toLocalTimestamp(SERVICE_START), []);
@@ -176,6 +216,33 @@ export default function App() {
     }, 250);
   }
 
+  function celebrateAchievement() {
+    // Особый конфетти для достижений
+    confetti({
+      particleCount: 200,
+      spread: 70,
+      origin: { y: 0.6 },
+      colors: ['#ff6b6b', '#ffa726', '#ffd93d', '#6bcf7f', '#4ecdc4']
+    });
+    
+    setTimeout(() => {
+      confetti({
+        particleCount: 150,
+        angle: 45,
+        spread: 60,
+        origin: { x: 0, y: 0.7 },
+        colors: ['#ff6b6b', '#ffa726']
+      });
+      confetti({
+        particleCount: 150,
+        angle: 135,
+        spread: 60,
+        origin: { x: 1, y: 0.7 },
+        colors: ['#ff6b6b', '#ffa726']
+      });
+    }, 300);
+  }
+
   // Отслеживание вех службы
   useEffect(() => {
     if (isOver && !confettiDoneRef.current) {
@@ -217,6 +284,13 @@ export default function App() {
     }
   }, [pct, isServiceStarted]);
 
+  // Автоматическое празднование достижений при уведомлении
+  useEffect(() => {
+    if (achievementNotification) {
+      celebrateAchievement();
+    }
+  }, [achievementNotification]);
+
   /* — действия — */
   function onMakanTap() {
     setPopped(true);
@@ -232,11 +306,39 @@ export default function App() {
     }
 
     setTapCount((prev) => {
-      const next = prev + 1;
-      if (next === 3) setShow1(true);
-      if (next === 7) setShow2(true);
-      if (next === 10) setShow3(true);
-      return next;
+      const newCount = prev + 1;
+      
+      // Проверяем, нужно ли показать новую надпись
+      const nextPopup = popupConfigs.find(popup => popup.trigger === newCount);
+      
+      if (nextPopup) {
+        // Добавляем в очередь если есть место, иначе ждем
+        if (activePopups.length < popupLimit) {
+          const newPopup = {
+            ...nextPopup,
+            instanceId: Date.now() + Math.random()
+          };
+          setActivePopups(prev => [...prev, newPopup]);
+          
+          // Автоудаление через 4 секунды
+          setTimeout(() => {
+            setActivePopups(prev => prev.filter(p => p.instanceId !== newPopup.instanceId));
+            // Проверяем очередь после удаления
+            processQueue();
+          }, 4000);
+        } else {
+          // Добавляем в очередь ожидания
+          setPopupQueue(prev => [...prev, nextPopup]);
+        }
+      }
+      
+      // Если все комбинации пройдены, начинаем круг заново
+      const maxTrigger = Math.max(...popupConfigs.map(p => p.trigger));
+      if (newCount > maxTrigger) {
+        return 1; // Начинаем заново
+      }
+      
+      return newCount;
     });
   }
 
@@ -283,6 +385,12 @@ export default function App() {
     const order = ["timer", "id", "medals"];
     setBlobDir(order.indexOf(next) > order.indexOf(tab) ? "right" : "left");
     setTab(next);
+    setMenuOpen(false);
+    
+    // Если переходим на вкладку достижений и есть уведомление, сбрасываем его
+    if (next === "medals" && achievementNotification) {
+      setAchievementNotification(false);
+    }
   }
 
   /* — кольцо — */
@@ -388,26 +496,22 @@ export default function App() {
                 className="absolute inset-0 z-[5] pointer-events-none"
                 style={clipStyle}
               >
-                {show1 && (
+                {activePopups.map((popup) => (
                   <img
-                    src="/jeb1.png"
-                    alt="jeb1"
-                    className="absolute left-[6%] bottom-[20%] w-[40%] md:w-[34%] max-w-[280px] jeb-layer jeb-img animate-rise-left auto-fade-out"
+                    key={popup.instanceId}
+                    src={popup.src}
+                    alt={`popup-${popup.id}`}
+                    className={`absolute popup-item ${popup.className}`}
                   />
-                )}
-                {show2 && (
-                  <img
-                    src="/jeb2.png"
-                    alt="jeb2"
-                    className="absolute right-[5%] top-1/2 -translate-y-1/2 w-[46%] md:w-[38%] max-w-[320px] jeb-layer jeb-img animate-slide-from-right auto-fade-out"
-                  />
-                )}
-                {show3 && (
-                  <div className="absolute top-[6%] left-1/2 -translate-x-1/2 w-[78%] md:w-[68%] grid place-items-center jeb-layer auto-fade-out">
-                    <img src="/jeb3.png" alt="jeb3" className="w-full jeb-img" />
-                  </div>
-                )}
+                ))}
               </div>
+
+              {/* Индикатор очереди надписей */}
+              {popupQueue.length > 0 && (
+                <div className="queue-indicator">
+                  +{popupQueue.length} в очереди
+                </div>
+              )}
 
               {/* Макан */}
               <img
@@ -498,13 +602,16 @@ export default function App() {
         )}
 
         {tab === "medals" && (
-          <AchievementsSection />
+          <AchievementsSection 
+            highlight={achievementNotification}
+            onHighlightClick={() => setAchievementNotification(false)}
+          />
         )}
       </main>
 
       {/* Бургер-меню в стиле островка */}
       <div
-        className={`fixed left-4 bottom-[calc(26px+env(safe-area-inset-bottom,0px))] z-[60] transition-all duration-300 ${
+        className={`fixed left-4 bottom-[calc(25px+env(safe-area-inset-bottom,0px))] z-[60] transition-all duration-300 ${
           burgerHidden ? "translate-y-14 opacity-0" : "translate-y-0 opacity-100"
         }`}
       >
@@ -542,13 +649,18 @@ export default function App() {
       </div>
 
       {/* Островок — компактный, только иконки */}
-      <BottomIsland tab={tab} onChange={switchTab} dir={blobDir} />
+      <BottomIsland 
+        tab={tab} 
+        onChange={switchTab} 
+        dir={blobDir}
+        achievementNotification={achievementNotification}
+      />
     </div>
   );
 }
 
 /* ========= ACHIEVEMENTS SECTION ========= */
-function AchievementsSection() {
+function AchievementsSection({ highlight, onHighlightClick }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const scrollContainerRef = useRef(null);
 
@@ -575,8 +687,26 @@ function AchievementsSection() {
   };
 
   return (
-    <section className="rounded-3xl bg-zinc-900/60 backdrop-blur p-6 shadow-xl border border-zinc-800/60 max-w-2xl mx-auto section-transition">
-      <div className="text-xl font-semibold mb-6 text-center stagger-item">Достижения</div>
+    <section className={`rounded-3xl bg-zinc-900/60 backdrop-blur p-6 shadow-xl border max-w-2xl mx-auto section-transition relative overflow-hidden ${
+      highlight 
+        ? 'border-emerald-500/60 bg-emerald-500/10 shadow-2xl shadow-emerald-500/20' 
+        : 'border-zinc-800/60'
+    } transition-all duration-1000`}>
+      
+      {/* Анимация подсветки при новом достижении */}
+      {highlight && (
+        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-transparent animate-pulse-slow pointer-events-none" />
+      )}
+      
+      <div className="text-xl font-semibold mb-6 text-center stagger-item relative">
+        Достижения
+        {highlight && (
+          <div 
+            className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-ping"
+            onClick={onHighlightClick}
+          />
+        )}
+      </div>
       
       {/* Индикатор прогресса */}
       <div className="flex justify-center mb-6 stagger-item">
@@ -607,7 +737,11 @@ function AchievementsSection() {
             key={achievement.id}
             className="flex-shrink-0 w-64 snap-center stagger-item"
           >
-            <div className="bg-zinc-800/60 rounded-2xl p-6 border border-emerald-500/30 text-center hover-lift transition-all duration-300">
+            <div className={`bg-zinc-800/60 rounded-2xl p-6 border text-center hover-lift transition-all duration-300 ${
+              highlight && index === 0 
+                ? 'border-emerald-400 shadow-lg shadow-emerald-400/20' 
+                : 'border-emerald-500/30'
+            }`}>
               {/* Иконка достижения */}
               <div className="text-4xl mb-4">{achievement.icon}</div>
               
@@ -665,8 +799,10 @@ function SoldierCard({ profile, service }) {
   const start = shortDate(service.start);
   const end = shortDate(service.end);
 
+  // Поля с категорией здоровья на втором месте
   const fields = [
     ["Реальное имя", profile.realName],
+    ["Категория годности", profile.fitnessCategory, true], // true - специальная анимация
     ["Псевдоним", profile.nickname],
     ["Дата рождения", formatBirth(profile.birth.date)],
     ["Место рождения", profile.birth.place],
@@ -674,7 +810,6 @@ function SoldierCard({ profile, service }) {
     ["Профессия", profile.profession],
     ["Жанры", profile.genres.join(", ")],
     ["Псевдонимы", profile.aliases.join(", ")],
-    ["Категория годности", profile.fitnessCategory],
     ["Место службы", profile.assignment],
     ["Дата призыва", start],
     ["Дембель", end],
@@ -698,14 +833,20 @@ function SoldierCard({ profile, service }) {
       </div>
 
       <div className="grid grid-cols-1 gap-2">
-        {fields.map(([k, v], index) => (
+        {fields.map(([k, v, isSpecial], index) => (
           <div
             key={k}
-            className={`flex items-center justify-between rounded-xl bg-zinc-900/60 border border-zinc-800 px-3 py-2 stagger-item hover-lift transition-all duration-300`}
+            className={`flex items-center justify-between rounded-xl bg-zinc-900/60 border border-zinc-800 px-3 py-2 stagger-item hover-lift transition-all duration-300 ${
+              isSpecial ? 'category-special' : ''
+            }`}
             style={{ animationDelay: `${index * 0.1}s` }}
           >
             <span className="text-xs text-zinc-400">{k}</span>
-            <span className="text-sm font-medium text-zinc-200 text-right">
+            <span className={`text-sm font-medium text-right ${
+              isSpecial 
+                ? 'text-emerald-300 category-letter animate-category-landing' 
+                : 'text-zinc-200'
+            }`}>
               {v}
             </span>
           </div>
@@ -716,7 +857,7 @@ function SoldierCard({ profile, service }) {
 }
 
 /* ========= ОСТРОВОК — только иконки ========= */
-function BottomIsland({ tab, onChange, dir }) {
+function BottomIsland({ tab, onChange, dir, achievementNotification }) {
   const contRef = useRef(null);
   const b1 = useRef(null),
     b2 = useRef(null),
@@ -811,12 +952,18 @@ function BottomIsland({ tab, onChange, dir }) {
 
           <button
             ref={b3}
-            className={`ui-btn ${tab === "medals" ? "active" : ""} transition-all duration-300 hover:scale-110 active:scale-95`}
+            className={`ui-btn ${tab === "medals" ? "active" : ""} transition-all duration-300 hover:scale-110 active:scale-95 relative`}
             aria-label="Medal"
             onClick={() => onChange("medals")}
             style={{ "--d": `${D}px` }}
           >
             <MedalIcon />
+            {achievementNotification && (
+              <>
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-ping" />
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse" />
+              </>
+            )}
           </button>
         </div>
       </div>
