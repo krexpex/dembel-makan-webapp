@@ -2,192 +2,163 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ================== БАЗА ================== */
+/* ====== ОСНОВНЫЕ ====== */
 html, body {
   @apply bg-black text-white select-none overflow-x-hidden;
-  font-family: 'Inter', 'SF Pro Display', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  font-family: 'Inter', 'SF Pro Display', system-ui, sans-serif;
   -webkit-tap-highlight-color: transparent;
 }
-
 button { @apply focus:outline-none; }
 
-/* ================== ГЛОБАЛЬНЫЕ АНИМАЦИИ ================== */
+/* Плавные появления */
 .appear-scale { animation: appear-scale .6s cubic-bezier(.25,1,.5,1); }
 @keyframes appear-scale {
   0% { transform: scale(.85); opacity: 0; }
-  100% { transform: scale(1);  opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
 }
-
 .appear-fade-up { animation: appear-fade-up .6s cubic-bezier(.25,1,.5,1); }
 @keyframes appear-fade-up {
   0% { transform: translateY(10px); opacity: 0; }
-  100% { transform: translateY(0);    opacity: 1; }
+  100% { transform: translateY(0); opacity: 1; }
 }
-
 .glow-enter { animation: glow-enter 2s ease-out forwards; }
-@keyframes glow-enter {
-  0%   { opacity: 0; transform: scale(1.2); }
-  100% { opacity: 1; transform: scale(1);   }
-}
+@keyframes glow-enter { 0% { opacity: 0; transform: scale(1.3);} 100% { opacity: 1; transform: scale(1);} }
 
-/* ================== PNG-НАДПИСИ ================== */
-.jeb-layer { animation: fadein .35s ease-out forwards; }
+/* ====== PNG-надписи ====== */
+.jeb-layer { animation: fadein .4s ease-out forwards; }
 .auto-fade-out { animation: fadeout 2.4s ease-out forwards; }
-@keyframes fadein   { from { opacity: 0; } to { opacity: 1; } }
-@keyframes fadeout  { 0% {opacity:1;} 92% {opacity:1;} 100% {opacity:0;} }
+@keyframes fadein { from {opacity:0} to {opacity:1} }
+@keyframes fadeout { 0%{opacity:1} 90%{opacity:1} 100%{opacity:0} }
 
-.jeb-img { image-rendering: -webkit-optimize-contrast; }
-
-/* Появление слева снизу (1) */
 .animate-rise-left { animation: rise-left 2.2s cubic-bezier(.25,1,.3,1) forwards; }
 @keyframes rise-left {
-  0%   { opacity: 0; transform: translateY(22px) rotate(-4deg); }
-  14%  { opacity: 1; transform: translateY(0)     rotate(0);    }
-  86%  { opacity: 1; transform: translateY(-3px); }
-  100% { opacity: 0; transform: translateY(-10px);}
+  0% { opacity:0; transform: translateY(20px) rotate(-4deg); }
+  15% { opacity:1; transform: translateY(0) rotate(0); }
+  85% { opacity:1; transform: translateY(-4px); }
+  100% { opacity:0; transform: translateY(-10px); }
 }
-
-/* Вылет справа (2) */
 .animate-slide-from-right { animation: slide-right 2.2s cubic-bezier(.25,1,.3,1) forwards; }
 @keyframes slide-right {
-  0%   { opacity: 0; transform: translateX(40px) rotate(2deg); }
-  16%  { opacity: 1; transform: translateX(0)    rotate(0);    }
-  86%  { opacity: 1; }
-  100% { opacity: 0; transform: translateX(18px); }
+  0% { opacity:0; transform: translateX(40px) rotate(2deg); }
+  15% { opacity:1; transform: translateX(0) rotate(0); }
+  85% { opacity:1; }
+  100% { opacity:0; transform: translateX(20px); }
 }
 
-/* ================== МАКАН ================== */
-.makan-shadow { filter: drop-shadow(0 18px 50px rgba(0,0,0,.65)); }
+/* ====== Макан ====== */
+.makan-shadow { filter: drop-shadow(0 10px 20px rgba(0,0,0,.6)); }
 .animate-wobble { animation: wobble 2.4s ease-in-out infinite; }
-@keyframes wobble {
-  0%,100% { transform: rotate(0deg); }
-  50%     { transform: rotate(.4deg); }
-}
+@keyframes wobble { 0%,100%{transform:rotate(0)} 50%{transform:rotate(.4deg)} }
 
-/* ================== СТЕКЛО КНОПОК/МЕНЮ ================== */
+/* ====== Glass-кнопки/меню ====== */
 .glass-btn {
   background: rgba(255,255,255,.06);
   border: 1px solid rgba(255,255,255,.12);
-  box-shadow: 0 6px 18px rgba(0,0,0,.45);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  transition: background .2s, transform .2s;
+  box-shadow: 0 4px 18px rgba(0,0,0,.45);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  transition: background .25s, transform .25s;
 }
 .glass-btn:active { background: rgba(255,255,255,.12); transform: scale(.96); }
 
 .glass-menu {
   background: rgba(18,18,18,.85);
-  border: 1px solid rgba(255,255,255,.12);
-  box-shadow: 0 16px 40px rgba(0,0,0,.45);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
 }
 
-/* =========================================================
-   НИЖНИЙ «ОСТРОВОК»: всегда видимые иконки + пузырёк + капля
-   ========================================================= */
-
-/* Контейнер с закруглением/стеклом задаётся utility-классами в JSX */
-
-/* Ряд кнопок */
-.ui-row{
-  position: relative;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-around;
-  gap: 16px;
-  padding: 0 6px;
+/* ====== FAB — круглая бургер-кнопка слева ====== */
+.fab-burger{
+  height:64px; width:64px; border-radius:50%;
+  display:grid; place-items:center;
+  color:#eef2f6;
+  background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
+  border: 1px solid rgba(255,255,255,.14);
+  box-shadow: 0 12px 40px rgba(0,0,0,.28);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  transition: transform .12s ease, background .2s ease;
 }
+.fab-burger:active{ transform: scale(.96); }
 
-/* Кнопка-иконка — всегда видна, без серых подложек */
-.ui-btn{
-  --d: 54px;               /* диаметр кнопки можно переопределять через style */
-  width: var(--d);
-  height: var(--d);
-  display: grid;
-  place-items: center;
-  border-radius: 9999px;
-  color: #eef2f6;
-  opacity: .95;
-  transition: transform .12s ease, opacity .2s ease;
-  will-change: transform;
-}
-.ui-btn:active{ transform: scale(.96); }
-.ui-btn svg{ width: 28px; height: 28px; display: block; }
-
-/* Пузырёк вокруг активной иконки — ИДЕАЛЬНЫЙ КРУГ */
-.ui-bubble{
-  position: absolute;
-  top: 50%;
-  left: 0;
-  width: var(--w, 54px);
-  height: var(--w, 54px);
-  transform: translateX(calc(var(--x, 0px) - 50%)) translateY(-50%);
-  border-radius: 9999px;
+/* ====== LIQUID ISLAND ====== */
+.island {
+  filter: url(#goo);
+  background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
+  border: 1px solid rgba(255,255,255,.14);
+  box-shadow: 0 12px 40px rgba(0,0,0,.28);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
   pointer-events: none;
-  z-index: 3;
-  transition:
-    transform 360ms cubic-bezier(.22,.76,.25,1),
-    width     360ms cubic-bezier(.22,.76,.25,1),
-    height    360ms cubic-bezier(.22,.76,.25,1);
+  border-radius: 34px;
 }
-.bubble-mounted{ transition-delay: 8ms; }
+.island-compact { width: min(380px, 74vw); } /* сузил островок */
+.not-full { margin: 0 auto; }
 
-.ui-bubble-core{
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: radial-gradient(120% 100% at 50% 8%,
-              rgba(255,255,255,.36),
-              rgba(255,255,255,.10) 44%,
-              rgba(255,255,255,.06) 100%);
-  border: 1px solid rgba(255,255,255,.28);
-  box-shadow:
-    inset 0 1px 8px rgba(255,255,255,.26),
-    inset 0 -14px 26px rgba(0,0,0,.28),
-    0 10px 24px rgba(0,0,0,.28);
+/* Ряд иконок на островке */
+.island-row{
+  position:relative; height:100%;
+  display:flex; align-items:center; justify-content:center;
+  gap:12px; pointer-events:none;
+}
+.island-btn{
+  height:56px; width:56px; display:grid; place-items:center;
+  color:#eef2f6; z-index:3; border-radius:22px; opacity:.92;
+  transition: transform .12s ease;
+  pointer-events:auto;
+}
+.island-btn svg{ width:26px; height:26px; }
+.island-btn:active{ transform: scale(.96); }
+
+/* Пузырёк вокруг активной иконки */
+.active-bubble{
+  position:absolute; top:50%; left:0; height:58px; width:var(--w,58px);
+  transform: translateX(calc(var(--x,0px) - 50%)) translateY(-50%);
+  z-index:2; pointer-events:none;
+  transition: transform 380ms cubic-bezier(.22,.76,.25,1),
+             width 380ms cubic-bezier(.22,.76,.25,1);
+  border-radius:29px;
+}
+.bubble-mounted{ transition-delay: 10ms; }
+.active-bubble-core{
+  position:absolute; inset:0; border-radius:29px;
+  background: radial-gradient(140% 120% at 50% 7%,
+    rgba(255,255,255,.35), rgba(255,255,255,.10) 42%, rgba(255,255,255,.06) 100%);
+  border:1px solid rgba(255,255,255,.28);
+  box-shadow: inset 0 1px 8px rgba(255,255,255,.28),
+              inset 0 -14px 24px rgba(0,0,0,.28),
+              0 12px 26px rgba(0,0,0,.28);
+}
+.active-bubble-gloss{
+  position:absolute; inset:0; border-radius:29px; pointer-events:none;
+  mix-blend-mode:screen; opacity:.65;
+  background:
+    radial-gradient(60% 36% at 50% 2%, rgba(255,255,255,.55), transparent 60%),
+    radial-gradient(62% 56% at 50% 86%, rgba(0,0,0,.22), transparent 60%);
 }
 
-/* КАПЛЯ под иконками — тоже круг, «перетекает» между центрами */
-.ui-blob{
-  position: absolute;
-  top: 50%;
-  left: 0;
-  width: var(--w, 54px);
-  height: var(--w, 54px);
-  transform: translateX(calc(var(--x, 0px) - 50%)) translateY(-50%);
-  border-radius: 9999px;
-  pointer-events: none;
-  z-index: 1;
-  transition:
-    transform 420ms cubic-bezier(.23,.86,.2,1),
-    width     420ms cubic-bezier(.23,.86,.2,1),
-    height    420ms cubic-bezier(.23,.86,.2,1);
+/* Капля-перелив под иконками */
+.blob-real{
+  position:absolute; top:50%; left:0; height:56px; width:var(--w,64px);
+  border-radius:28px;
+  transform: translateX(calc(var(--x,0px) - 50%)) translateY(-50%);
+  transition: transform 420ms cubic-bezier(.23,.86,.2,1),
+             width 420ms cubic-bezier(.23,.86,.2,1);
+  z-index:1; pointer-events:none;
 }
-.blob-mounted{ transition-delay: 16ms; }
-
-.ui-blob-core{
-  position: absolute; inset: 0; border-radius: inherit;
-  background: radial-gradient(100% 120% at 50% 12%,
-              rgba(255,255,255,.24),
-              rgba(255,255,255,.10) 45%,
-              rgba(255,255,255,.06) 100%);
-  border: 1px solid rgba(255,255,255,.18);
+.blob-mounted{ transition-delay: 18ms; }
+.stretch-r,.stretch-l{ transition-timing-function: cubic-bezier(.23,.86,.2,1); }
+.blob-core{
+  position:absolute; inset:0;
+  background: radial-gradient(90% 120% at 50% 12%,
+    rgba(255,255,255,.26), rgba(255,255,255,.10) 45%, rgba(255,255,255,.06) 100%);
+  border:1px solid rgba(255,255,255,.22);
   border-bottom-color: rgba(0,0,0,.18);
-  box-shadow:
-    inset 0 1px 6px rgba(255,255,255,.24),
-    inset 0 -12px 22px rgba(0,0,0,.22),
-    0 10px 22px rgba(0,0,0,.25);
+  box-shadow: inset 0 1px 6px rgba(255,255,255,.24),
+              inset 0 -12px 22px rgba(0,0,0,.25),
+              0 10px 24px rgba(0,0,0,.25);
+  border-radius:28px;
 }
-
-/* ===== Доп. косметика, чтобы иконки были строго по центру круга ===== */
-.ui-btn > svg {
-  transform: translateY(0);   /* гарантированный центр без смещения вниз */
+.blob-spec{
+  position:absolute; inset:0; border-radius:28px;
+  background:
+    radial-gradient(70% 40% at 50% 5%, rgba(255,255,255,.45), transparent 60%),
+    radial-gradient(60% 60% at 50% 80%, rgba(0,0,0,.18), transparent 60%);
+  mix-blend-mode:screen; opacity:.60;
 }
-
-/* ================== ХЕЛПЕРЫ ДЛЯ Z-INDEX (если пригодится) ================== */
-/* .above-all { position: relative; z-index: 999; } */
-/* .below-makan { position: relative; z-index: 4; }  /* PNG-надписи мы кладём ниже Макана */
-
-/* Конец файла */
