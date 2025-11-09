@@ -150,7 +150,7 @@ button { @apply focus:outline-none; }
     0 10px 24px rgba(0,0,0,.28);
 }
 
-/* КАПЛЯ под иконками — тоже круг, «перетекает» между центрами */
+/* КАПЛЯ под иконками — тоже круг, «перетекает» между центрам */
 .ui-blob{
   position: absolute;
   top: 50%;
@@ -186,6 +186,39 @@ button { @apply focus:outline-none; }
 .ui-btn > svg {
   transform: translateY(0);   /* гарантированный центр без смещения вниз */
 }
+
+/* ================== НОВЫЕ АНИМАЦИИ БЕЗ КОНФЛИКТОВ ================== */
+
+/* Параллакс эффекты */
+@keyframes float {
+  0%, 100% { transform: translateY(0px) translateX(0px); }
+  50% { transform: translateY(-20px) translateX(10px); }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.6; }
+}
+
+/* Micro-interactions без конфликтов */
+.hover-lift {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+}
+
+.hover-lift:active {
+  transform: translateY(0);
+}
+
+/* Плавные переходы для секций */
+.section-transition {
+  transition: all 0.3s ease;
+}
+
+/* Скрытие скроллбара */
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
@@ -194,8 +227,62 @@ button { @apply focus:outline-none; }
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
-/* ================== ХЕЛПЕРЫ ДЛЯ Z-INDEX (если пригодится) ================== */
-/* .above-all { position: relative; z-index: 999; } */
-/* .below-makan { position: relative; z-index: 4; }  /* PNG-надписи мы кладём ниже Макана */
 
-/* Конец файла */
+/* Плавный скролл */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Кастомный скроллбар */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(16, 185, 129, 0.5);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(16, 185, 129, 0.7);
+}
+
+/* Анимация для staggered появления (упрощенная) */
+.stagger-item {
+  opacity: 0;
+  animation: staggerFadeIn 0.5s ease forwards;
+}
+
+@keyframes staggerFadeIn {
+  to {
+    opacity: 1;
+  }
+}
+
+/* Задержки для staggered */
+.stagger-item:nth-child(1) { animation-delay: 0.1s; }
+.stagger-item:nth-child(2) { animation-delay: 0.2s; }
+.stagger-item:nth-child(3) { animation-delay: 0.3s; }
+
+/* Оптимизация для тач-устройств */
+@media (hover: none) and (pointer: coarse) {
+  .hover-lift:hover {
+    transform: none;
+  }
+}
+
+/* Отключение анимаций для пользователей с prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

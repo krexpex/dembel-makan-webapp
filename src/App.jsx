@@ -132,6 +132,51 @@ export default function App() {
   const timeUntilStartParts = msParts(timeUntilStartMs);
   const isServiceStarted = timeUntilStartMs <= 0;
 
+  /* — анимации — */
+  function burst(p = 0.5) {
+    const n = Math.floor(100 * p);
+    confetti({
+      particleCount: n,
+      spread: 65,
+      startVelocity: 38,
+      origin: { x: 0.2, y: 0.4 },
+    });
+    confetti({
+      particleCount: n,
+      spread: 65,
+      startVelocity: 38,
+      origin: { x: 0.8, y: 0.4 },
+    });
+  }
+
+  function celebrateMilestone() {
+    // Сложный конфетти для особых событий
+    confetti({
+      particleCount: 150,
+      spread: 100,
+      origin: { y: 0.3 },
+      colors: ['#10b981', '#059669', '#047857', '#ec4899', '#8b5cf6']
+    });
+    
+    setTimeout(() => {
+      confetti({
+        particleCount: 100,
+        angle: 60,
+        spread: 80,
+        origin: { x: 0, y: 0.4 },
+        colors: ['#10b981', '#059669']
+      });
+      confetti({
+        particleCount: 100,
+        angle: 120,
+        spread: 80,
+        origin: { x: 1, y: 0.4 },
+        colors: ['#10b981', '#059669']
+      });
+    }, 250);
+  }
+
+  // Отслеживание вех службы
   useEffect(() => {
     if (isOver && !confettiDoneRef.current) {
       confettiDoneRef.current = true;
@@ -157,21 +202,20 @@ export default function App() {
     if (!isOver) confettiDoneRef.current = false;
   }, [isOver]);
 
-  function burst(p = 0.5) {
-    const n = Math.floor(100 * p);
-    confetti({
-      particleCount: n,
-      spread: 65,
-      startVelocity: 38,
-      origin: { x: 0.2, y: 0.4 },
-    });
-    confetti({
-      particleCount: n,
-      spread: 65,
-      startVelocity: 38,
-      origin: { x: 0.8, y: 0.4 },
-    });
-  }
+  useEffect(() => {
+    // 50% службы
+    if (isServiceStarted && pct >= 50 && pct < 51) {
+      celebrateMilestone();
+    }
+    // 75% службы  
+    if (isServiceStarted && pct >= 75 && pct < 76) {
+      celebrateMilestone();
+    }
+    // 90% службы
+    if (isServiceStarted && pct >= 90 && pct < 91) {
+      celebrateMilestone();
+    }
+  }, [pct, isServiceStarted]);
 
   /* — действия — */
   function onMakanTap() {
@@ -268,13 +312,31 @@ export default function App() {
       {/* Контент */}
       <main className="mx-auto max-w-6xl p-4 pb-[calc(100px+env(safe-area-inset-bottom,0px))]">
         {tab === "timer" && (
-          <section className="relative flex flex-col items-center justify-center rounded-3xl bg-zinc-900/60 backdrop-blur p-5 md:p-6 shadow-xl overflow-hidden">
+          <section className="relative flex flex-col items-center justify-center rounded-3xl bg-zinc-900/60 backdrop-blur p-5 md:p-6 shadow-xl overflow-hidden section-transition">
+            {/* Параллакс слои */}
+            <div 
+              className="absolute inset-0 -z-20 opacity-20"
+              style={{
+                backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%2310b981' fill-opacity='0.2' fill-rule='evenodd'/%3E%3C/svg%3E")`,
+                transform: 'translateY(0px)',
+                animation: 'float 20s ease-in-out infinite'
+              }}
+            />
+            
+            <div 
+              className="absolute inset-0 -z-10 opacity-30"
+              style={{
+                background: "radial-gradient(30rem 30rem at 50% 20%, rgba(16,185,129,0.18), rgba(0,0,0,0))",
+                transform: 'translateY(0px)',
+                animation: 'pulseGlow 8s ease-in-out infinite'
+              }}
+            />
+
             <div
               aria-hidden
               className={`absolute inset-0 -z-10 ${entered ? "glow-enter" : ""}`}
               style={{
-                background:
-                  "radial-gradient(30rem 30rem at 50% 20%, rgba(16,185,129,0.18), rgba(0,0,0,0))",
+                background: "radial-gradient(30rem 30rem at 50% 20%, rgba(16,185,129,0.18), rgba(0,0,0,0))",
               }}
             />
 
@@ -367,30 +429,30 @@ export default function App() {
             {/* Текст и прогресс */}
             <div className={`mt-2 text-center ${entered ? "appear-fade-up" : ""}`}>
               {isOver ? (
-                <div className="text-2xl md:text-4xl font-extrabold">
+                <div className="text-2xl md:text-4xl font-extrabold stagger-item">
                   🎉 {NICK} ДЕМБЕЛЬНУЛСЯ!
                 </div>
               ) : isServiceStarted ? (
                 <>
-                  <h1 className="text-lg md:text-xl font-semibold text-zinc-300">
+                  <h1 className="text-lg md:text-xl font-semibold text-zinc-300 stagger-item">
                     До дембеля {NICK}
                   </h1>
-                  <div className="text-2xl md:text-4xl font-extrabold tracking-tight mt-1">
+                  <div className="text-2xl md:text-4xl font-extrabold tracking-tight mt-1 stagger-item">
                     {formatParts(leftParts)}
                   </div>
-                  <div className="text-xs md:text-sm text-zinc-400 mt-1">
+                  <div className="text-xs md:text-sm text-zinc-400 mt-1 stagger-item">
                     Таймзона: {tz}
                   </div>
                 </>
               ) : (
                 <>
-                  <h1 className="text-lg md:text-xl font-semibold text-zinc-300">
+                  <h1 className="text-lg md:text-xl font-semibold text-zinc-300 stagger-item">
                     До начала службы {NICK}
                   </h1>
-                  <div className="text-2xl md:text-4xl font-extrabold tracking-tight mt-1">
+                  <div className="text-2xl md:text-4xl font-extrabold tracking-tight mt-1 stagger-item">
                     {formatParts(timeUntilStartParts)}
                   </div>
-                  <div className="text-xs md:text-sm text-zinc-400 mt-1">
+                  <div className="text-xs md:text-sm text-zinc-400 mt-1 stagger-item">
                     Таймзона: {tz}
                   </div>
                 </>
@@ -400,10 +462,10 @@ export default function App() {
             {/* Прогресс-бар (только когда служба началась) */}
             {isServiceStarted && !isOver && (
               <>
-                <div className="w-full max-w-xl h-3 bg-zinc-800 rounded-full overflow-hidden mt-3">
-                  <div className="h-full bg-white/80" style={{ width: `${pct}%` }} />
+                <div className="w-full max-w-xl h-3 bg-zinc-800 rounded-full overflow-hidden mt-3 stagger-item">
+                  <div className="h-full bg-white/80 transition-all duration-1000 ease-out" style={{ width: `${pct}%` }} />
                 </div>
-                <div className="text-xs text-zinc-300 mt-1">
+                <div className="text-xs text-zinc-300 mt-1 stagger-item">
                   Выполнено службы: {pct.toFixed(2)}%
                 </div>
               </>
@@ -412,13 +474,13 @@ export default function App() {
             <div className="flex flex-col items-center gap-3 mt-4">
               <button
                 onClick={share}
-                className="px-4 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 font-medium"
+                className="px-4 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 font-medium hover-lift transition-all duration-300 active:scale-95 shadow-lg hover:shadow-xl stagger-item"
               >
                 Поделиться
               </button>
               <button
                 onClick={openGroup}
-                className="px-4 py-3 rounded-2xl bg-zinc-700 hover:bg-zinc-600 font-medium"
+                className="px-4 py-3 rounded-2xl bg-zinc-700 hover:bg-zinc-600 font-medium hover-lift transition-all duration-300 active:scale-95 shadow-lg hover:shadow-xl stagger-item"
               >
                 Ждём вместе
               </button>
@@ -427,7 +489,7 @@ export default function App() {
         )}
 
         {tab === "id" && (
-          <section className="rounded-3xl bg-[rgba(24,24,27,0.85)] shadow-xl p-4 md:p-6 border border-zinc-800/60 max-w-2xl mx-auto">
+          <section className="rounded-3xl bg-[rgba(24,24,27,0.85)] shadow-xl p-4 md:p-6 border border-zinc-800/60 max-w-2xl mx-auto section-transition">
             <SoldierCard
               profile={PROFILE}
               service={{ start: SERVICE_START, end: DEMOBIL_DATE }}
@@ -442,13 +504,13 @@ export default function App() {
 
       {/* Бургер-меню в стиле островка */}
       <div
-        className={`fixed left-4 bottom-[calc(23px+env(safe-area-inset-bottom,0px))] z-[60] transition-all duration-300 ${
+        className={`fixed left-4 bottom-[calc(26px+env(safe-area-inset-bottom,0px))] z-[60] transition-all duration-300 ${
           burgerHidden ? "translate-y-14 opacity-0" : "translate-y-0 opacity-100"
         }`}
       >
         <button
           onClick={() => setMenuOpen((o) => !o)}
-          className="w-12 h-12 bg-[rgba(20,20,20,.85)] backdrop-blur-xl rounded-2xl border border-white/15 shadow-[0_8px_32px_rgba(0,0,0,.35)] flex flex-col items-center justify-center gap-1.5 hover:bg-white/10 transition-all duration-300 hover:scale-105"
+          className="w-12 h-12 bg-[rgba(20,20,20,.85)] backdrop-blur-xl rounded-2xl border border-white/15 shadow-[0_8px_32px_rgba(0,0,0,.35)] flex flex-col items-center justify-center gap-1.5 hover:bg-white/10 transition-all duration-300 hover:scale-105 active:scale-95"
           aria-label="menu"
         >
           <div className={`w-5 h-0.5 bg-white rounded-full transition-all duration-300 ${menuOpen ? 'rotate-45 translate-y-1.5' : ''}`}></div>
@@ -457,21 +519,21 @@ export default function App() {
         </button>
 
         {menuOpen && (
-          <div className="absolute left-0 bottom-14 mb-2 w-48 bg-[rgba(20,20,20,.95)] backdrop-blur-xl rounded-2xl border border-white/15 p-3 shadow-[0_8px_32px_rgba(0,0,0,.35)]">
+          <div className="absolute left-0 bottom-14 mb-2 w-48 bg-[rgba(20,20,20,.95)] backdrop-blur-xl rounded-2xl border border-white/15 p-3 shadow-[0_8px_32px_rgba(0,0,0,.35)] section-transition">
             <nav className="flex flex-col space-y-2">
               <button
                 onClick={toggleVibration}
-                className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/10 transition-colors text-white text-left"
+                className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/10 transition-colors text-white text-left hover-lift active:scale-95"
               >
                 {vibrateEnabled ? <VibrationOnIcon /> : <VibrationOffIcon />}
                 <span className="text-sm">
                   {vibrateEnabled ? "Выключить вибрацию" : "Включить вибрацию"}
                 </span>
               </button>
-              <a href="#" className="text-white hover:text-emerald-300 transition-colors text-sm font-medium py-2 px-3 rounded-lg hover:bg-white/10">
+              <a href="#" className="text-white hover:text-emerald-300 transition-colors text-sm font-medium py-2 px-3 rounded-lg hover:bg-white/10 hover-lift active:scale-95">
                 О проекте
               </a>
-              <a href="#" className="text-white hover:text-emerald-300 transition-colors text-sm font-medium py-2 px-3 rounded-lg hover:bg-white/10">
+              <a href="#" className="text-white hover:text-emerald-300 transition-colors text-sm font-medium py-2 px-3 rounded-lg hover:bg-white/10 hover-lift active:scale-95">
                 Помощь
               </a>
             </nav>
@@ -513,11 +575,11 @@ function AchievementsSection() {
   };
 
   return (
-    <section className="rounded-3xl bg-zinc-900/60 backdrop-blur p-6 shadow-xl border border-zinc-800/60 max-w-2xl mx-auto">
-      <div className="text-xl font-semibold mb-6 text-center">Достижения</div>
+    <section className="rounded-3xl bg-zinc-900/60 backdrop-blur p-6 shadow-xl border border-zinc-800/60 max-w-2xl mx-auto section-transition">
+      <div className="text-xl font-semibold mb-6 text-center stagger-item">Достижения</div>
       
       {/* Индикатор прогресса */}
-      <div className="flex justify-center mb-6">
+      <div className="flex justify-center mb-6 stagger-item">
         <div className="flex space-x-1">
           {unlockedAchievements.map((_, index) => (
             <button
@@ -543,9 +605,9 @@ function AchievementsSection() {
         {unlockedAchievements.map((achievement, index) => (
           <div 
             key={achievement.id}
-            className="flex-shrink-0 w-64 snap-center"
+            className="flex-shrink-0 w-64 snap-center stagger-item"
           >
-            <div className="bg-zinc-800/60 rounded-2xl p-6 border border-emerald-500/30 text-center">
+            <div className="bg-zinc-800/60 rounded-2xl p-6 border border-emerald-500/30 text-center hover-lift transition-all duration-300">
               {/* Иконка достижения */}
               <div className="text-4xl mb-4">{achievement.icon}</div>
               
@@ -572,8 +634,8 @@ function AchievementsSection() {
         ))}
         
         {/* Блок следующих событий */}
-        <div className="flex-shrink-0 w-64 snap-center">
-          <div className="bg-zinc-800/30 rounded-2xl p-6 border border-zinc-600/50 text-center">
+        <div className="flex-shrink-0 w-64 snap-center stagger-item">
+          <div className="bg-zinc-800/30 rounded-2xl p-6 border border-zinc-600/50 text-center hover-lift transition-all duration-300">
             <div className="text-4xl mb-4 opacity-50">🔮</div>
             <h3 className="text-lg font-semibold text-zinc-500 mb-2">
               Следующие события
@@ -589,7 +651,7 @@ function AchievementsSection() {
       </div>
 
       {/* Подсказка для скролла */}
-      <div className="text-center mt-4">
+      <div className="text-center mt-4 stagger-item">
         <p className="text-zinc-400 text-sm">
           Листайте в сторону для просмотра достижений
         </p>
@@ -620,8 +682,8 @@ function SoldierCard({ profile, service }) {
 
   return (
     <div>
-      <div className="flex items-center gap-3 mb-4">
-        <div className="h-12 w-12 rounded-full bg-emerald-600/25 border border-emerald-500/40 grid place-items-center">
+      <div className="flex items-center gap-3 mb-4 stagger-item">
+        <div className="h-12 w-12 rounded-full bg-emerald-600/25 border border-emerald-500/40 grid place-items-center hover-lift transition-all duration-300">
           <span className="text-emerald-300 font-semibold">ЖМ</span>
         </div>
         <div>
@@ -636,10 +698,11 @@ function SoldierCard({ profile, service }) {
       </div>
 
       <div className="grid grid-cols-1 gap-2">
-        {fields.map(([k, v]) => (
+        {fields.map(([k, v], index) => (
           <div
             key={k}
-            className="flex items-center justify-between rounded-xl bg-zinc-900/60 border border-zinc-800 px-3 py-2"
+            className={`flex items-center justify-between rounded-xl bg-zinc-900/60 border border-zinc-800 px-3 py-2 stagger-item hover-lift transition-all duration-300`}
+            style={{ animationDelay: `${index * 0.1}s` }}
           >
             <span className="text-xs text-zinc-400">{k}</span>
             <span className="text-sm font-medium text-zinc-200 text-right">
@@ -703,7 +766,7 @@ function BottomIsland({ tab, onChange, dir }) {
     <nav className="fixed left-0 right-0 bottom-[calc(16px+env(safe-area-inset-bottom,0px))] z-[55] flex justify-end px-4 pointer-events-none">
       <div
         ref={contRef}
-        className="pointer-events-auto rounded-[28px] bg-[rgba(20,20,20,.85)] border border-white/15 shadow-[0_8px_32px_rgba(0,0,0,.35)] backdrop-blur-xl px-3"
+        className="pointer-events-auto rounded-[28px] bg-[rgba(20,20,20,.85)] border border-white/15 shadow-[0_8px_32px_rgba(0,0,0,.35)] backdrop-blur-xl px-3 section-transition"
         style={{ width: "min(380px, 75vw)", height: 62 }}
       >
         {/* Пузырёк над активной иконкой */}
@@ -728,7 +791,7 @@ function BottomIsland({ tab, onChange, dir }) {
         <div className="ui-row" style={{ height: 62 }}>
           <button
             ref={b1}
-            className={`ui-btn ${tab === "timer" ? "active" : ""}`}
+            className={`ui-btn ${tab === "timer" ? "active" : ""} transition-all duration-300 hover:scale-110 active:scale-95`}
             aria-label="Timer"
             onClick={() => onChange("timer")}
             style={{ "--d": `${D}px` }}
@@ -738,7 +801,7 @@ function BottomIsland({ tab, onChange, dir }) {
 
           <button
             ref={b2}
-            className={`ui-btn ${tab === "id" ? "active" : ""}`}
+            className={`ui-btn ${tab === "id" ? "active" : ""} transition-all duration-300 hover:scale-110 active:scale-95`}
             aria-label="ID"
             onClick={() => onChange("id")}
             style={{ "--d": `${D}px` }}
@@ -748,7 +811,7 @@ function BottomIsland({ tab, onChange, dir }) {
 
           <button
             ref={b3}
-            className={`ui-btn ${tab === "medals" ? "active" : ""}`}
+            className={`ui-btn ${tab === "medals" ? "active" : ""} transition-all duration-300 hover:scale-110 active:scale-95`}
             aria-label="Medal"
             onClick={() => onChange("medals")}
             style={{ "--d": `${D}px` }}
