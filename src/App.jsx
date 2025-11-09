@@ -27,6 +27,35 @@ const PROFILE = {
 const SERVICE_START = "2025-11-28T00:00:00";
 const DEMOBIL_DATE = "2026-10-01T00:00:00";
 
+// Достижения - легко добавлять новые
+const ACHIEVEMENTS = [
+  {
+    id: 1,
+    title: "Заявление об уходе в армию",
+    description: "Макан официально объявил о начале военной службы",
+    date: "2025-10-17",
+    icon: "🎤",
+    unlocked: true
+  },
+  {
+    id: 2, 
+    title: "Медицинская комиссия",
+    description: "Пройдена медкомиссия и получена категория годности А",
+    date: "2025-10-25",
+    icon: "🏥", 
+    unlocked: true
+  },
+  // Просто добавь новый объект сюда когда будет новое событие
+  // {
+  //   id: 3,
+  //   title: "Название события",
+  //   description: "Описание что произошло", 
+  //   date: "2025-11-20",
+  //   icon: "🎯",
+  //   unlocked: true
+  // }
+];
+
 /* ========= APP ========= */
 export default function App() {
   const tz =
@@ -265,7 +294,7 @@ export default function App() {
   return (
     <div className="min-h-screen w-full bg-gradient-to-b from-[#0f1514] to-[#0b1110] text-zinc-50">
       {/* Контент */}
-      <main className="mx-auto max-w-6xl p-4 pb-[calc(140px+env(safe-area-inset-bottom,0px))]">
+      <main className="mx-auto max-w-6xl p-4 pb-[calc(100px+env(safe-area-inset-bottom,0px))]">
         {tab === "timer" && (
           <section className="relative flex flex-col items-center justify-center rounded-3xl bg-zinc-900/60 backdrop-blur p-5 md:p-6 shadow-xl overflow-hidden">
             <div
@@ -435,18 +464,13 @@ export default function App() {
         )}
 
         {tab === "medals" && (
-          <section className="rounded-3xl bg-zinc-900/60 backdrop-blur p-6 shadow-xl border border-zinc-800/60 max-w-2xl mx-auto text-center">
-            <div className="text-xl font-semibold mb-2">Достижения</div>
-            <div className="text-zinc-400 text-sm">
-              Скоро здесь появятся медали и трофеи.
-            </div>
-          </section>
+          <AchievementsSection />
         )}
       </main>
 
-                  {/* Бургер-меню в стиле островка */}
+      {/* Бургер-меню в стиле островка */}
       <div
-        className={`fixed left-4 bottom-[calc(39px+env(safe-area-inset-bottom,0px))] z-[60] transition-all duration-300 ${
+        className={`fixed left-4 bottom-[calc(26px+env(safe-area-inset-bottom,0px))] z-[60] transition-all duration-300 ${
           burgerHidden ? "translate-y-14 opacity-0" : "translate-y-0 opacity-100"
         }`}
       >
@@ -486,6 +510,119 @@ export default function App() {
       {/* Островок — компактный, только иконки */}
       <BottomIsland tab={tab} onChange={switchTab} dir={blobDir} />
     </div>
+  );
+}
+
+/* ========= ACHIEVEMENTS SECTION ========= */
+function AchievementsSection() {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const scrollContainerRef = useRef(null);
+
+  const unlockedAchievements = ACHIEVEMENTS.filter(a => a.unlocked);
+
+  const scrollToIndex = (index) => {
+    if (scrollContainerRef.current) {
+      const scrollWidth = scrollContainerRef.current.scrollWidth;
+      const itemWidth = scrollWidth / unlockedAchievements.length;
+      scrollContainerRef.current.scrollTo({
+        left: index * itemWidth,
+        behavior: 'smooth'
+      });
+    }
+    setCurrentIndex(index);
+  };
+
+  const handleScroll = (e) => {
+    const container = e.target;
+    const scrollWidth = container.scrollWidth;
+    const itemWidth = scrollWidth / unlockedAchievements.length;
+    const newIndex = Math.round(container.scrollLeft / itemWidth);
+    setCurrentIndex(newIndex);
+  };
+
+  return (
+    <section className="rounded-3xl bg-zinc-900/60 backdrop-blur p-6 shadow-xl border border-zinc-800/60 max-w-2xl mx-auto">
+      <div className="text-xl font-semibold mb-6 text-center">Достижения</div>
+      
+      {/* Индикатор прогресса */}
+      <div className="flex justify-center mb-6">
+        <div className="flex space-x-1">
+          {unlockedAchievements.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => scrollToIndex(index)}
+              className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                index === currentIndex 
+                  ? 'bg-emerald-400 w-6' 
+                  : 'bg-zinc-600 hover:bg-zinc-400'
+              }`}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Контейнер для скролла */}
+      <div 
+        ref={scrollContainerRef}
+        onScroll={handleScroll}
+        className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide space-x-4 pb-4 -mx-2 px-2"
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+      >
+        {unlockedAchievements.map((achievement, index) => (
+          <div 
+            key={achievement.id}
+            className="flex-shrink-0 w-64 snap-center"
+          >
+            <div className="bg-zinc-800/60 rounded-2xl p-6 border border-emerald-500/30 text-center">
+              {/* Иконка достижения */}
+              <div className="text-4xl mb-4">{achievement.icon}</div>
+              
+              {/* Название */}
+              <h3 className="text-lg font-semibold text-white mb-2">
+                {achievement.title}
+              </h3>
+              
+              {/* Описание */}
+              <p className="text-zinc-300 text-sm mb-4">
+                {achievement.description}
+              </p>
+              
+              {/* Дата */}
+              <div className="text-emerald-400 text-xs font-medium">
+                {new Date(achievement.date).toLocaleDateString('ru-RU', {
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric'
+                })}
+              </div>
+            </div>
+          </div>
+        ))}
+        
+        {/* Блок следующих событий */}
+        <div className="flex-shrink-0 w-64 snap-center">
+          <div className="bg-zinc-800/30 rounded-2xl p-6 border border-zinc-600/50 text-center">
+            <div className="text-4xl mb-4 opacity-50">🔮</div>
+            <h3 className="text-lg font-semibold text-zinc-500 mb-2">
+              Следующие события
+            </h3>
+            <p className="text-zinc-500 text-sm mb-4">
+              Следите за обновлениями
+            </p>
+            <div className="text-zinc-600 text-xs font-medium">
+              Скоро появятся
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Подсказка для скролла */}
+      <div className="text-center mt-4">
+        <p className="text-zinc-400 text-sm">
+          Листайте в сторону для просмотра достижений
+        </p>
+      </div>
+    </section>
   );
 }
 
@@ -543,7 +680,7 @@ function SoldierCard({ profile, service }) {
   );
 }
 
-/* ========= ОСТРОВОК — компактный, только иконки ========= */
+/* ========= ОСТРОВОК — только иконки ========= */
 function BottomIsland({ tab, onChange, dir }) {
   const contRef = useRef(null);
   const b1 = useRef(null),
@@ -551,7 +688,7 @@ function BottomIsland({ tab, onChange, dir }) {
     b3 = useRef(null);
 
   // диаметр пузырька/капли и самих кнопок
-  const D = 50; // уменьшил с 54 до 50
+  const D = 50;
 
   const [bubble, setBubble] = useState({ x: 0, w: D });
   const [blob, setBlob] = useState({ x: 0, w: D });
@@ -571,7 +708,7 @@ function BottomIsland({ tab, onChange, dir }) {
     setMounted(true);
     const recalc = () => {
       const { x, w } = centerOf(currentBtn(tab));
-      const size = Math.max(46, Math.min(D, w)); // уменьшил минимальный размер
+      const size = Math.max(46, Math.min(D, w));
       setBubble({ x, w: size });
       setBlob({ x, w: size });
     };
@@ -591,11 +728,11 @@ function BottomIsland({ tab, onChange, dir }) {
   }, [tab]);
 
   return (
-    <nav className="fixed left-0 right-0 bottom-[calc(32px+env(safe-area-inset-bottom,0px))] z-[55] flex justify-end px-4 pointer-events-none">
+    <nav className="fixed left-0 right-0 bottom-[calc(16px+env(safe-area-inset-bottom,0px))] z-[55] flex justify-end px-4 pointer-events-none">
       <div
         ref={contRef}
         className="pointer-events-auto rounded-[28px] bg-[rgba(20,20,20,.85)] border border-white/15 shadow-[0_8px_32px_rgba(0,0,0,.35)] backdrop-blur-xl px-3"
-        style={{ width: "min(380px, 75vw)", height: 62 }} // уменьшил ширину и высоту
+        style={{ width: "min(380px, 75vw)", height: 62 }}
       >
         {/* Пузырёк над активной иконкой */}
         <div

@@ -186,7 +186,14 @@ button { @apply focus:outline-none; }
 .ui-btn > svg {
   transform: translateY(0);   /* гарантированный центр без смещения вниз */
 }
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
 
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
 /* ================== ХЕЛПЕРЫ ДЛЯ Z-INDEX (если пригодится) ================== */
 /* .above-all { position: relative; z-index: 999; } */
 /* .below-makan { position: relative; z-index: 4; }  /* PNG-надписи мы кладём ниже Макана */
