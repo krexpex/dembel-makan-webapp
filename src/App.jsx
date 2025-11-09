@@ -446,7 +446,7 @@ export default function App() {
 
                   {/* Бургер-меню в стиле островка */}
       <div
-        className={`fixed left-4 bottom-[calc(31px+env(safe-area-inset-bottom,0px))] z-[60] transition-all duration-300 ${
+        className={`fixed left-4 bottom-[calc(39px+env(safe-area-inset-bottom,0px))] z-[60] transition-all duration-300 ${
           burgerHidden ? "translate-y-14 opacity-0" : "translate-y-0 opacity-100"
         }`}
       >
@@ -591,7 +591,7 @@ function BottomIsland({ tab, onChange, dir }) {
   }, [tab]);
 
   return (
-    <nav className="fixed left-0 right-0 bottom-[calc(16px+env(safe-area-inset-bottom,0px))] z-[55] flex justify-end px-4 pointer-events-none">
+    <nav className="fixed left-0 right-0 bottom-[calc(32px+env(safe-area-inset-bottom,0px))] z-[55] flex justify-end px-4 pointer-events-none">
       <div
         ref={contRef}
         className="pointer-events-auto rounded-[28px] bg-[rgba(20,20,20,.85)] border border-white/15 shadow-[0_8px_32px_rgba(0,0,0,.35)] backdrop-blur-xl px-3"
