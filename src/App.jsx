@@ -264,45 +264,6 @@ export default function App() {
   /* — рендер — */
   return (
     <div className="min-h-screen w-full bg-gradient-to-b from-[#0f1514] to-[#0b1110] text-zinc-50">
-      {/* Бургер-меню слева */}
-      <div
-        className={`fixed left-4 top-4 z-[60] transition-all duration-300 ${
-          burgerHidden ? "-translate-y-14 opacity-0" : "translate-y-0 opacity-100"
-        }`}
-      >
-        <button
-          onClick={() => setMenuOpen((o) => !o)}
-          className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-full border-2 border-white/20 flex flex-col items-center justify-center gap-1.5 hover:bg-white/15 transition-all duration-300 hover:scale-105 shadow-lg"
-          aria-label="menu"
-        >
-          <div className={`w-5 h-0.5 bg-white rounded-full transition-all duration-300 ${menuOpen ? 'rotate-45 translate-y-1.5' : ''}`}></div>
-          <div className={`w-5 h-0.5 bg-white rounded-full transition-all duration-300 ${menuOpen ? 'opacity-0' : 'opacity-100'}`}></div>
-          <div className={`w-5 h-0.5 bg-white rounded-full transition-all duration-300 ${menuOpen ? '-rotate-45 -translate-y-1.5' : ''}`}></div>
-        </button>
-
-        {menuOpen && (
-          <div className="absolute left-0 top-14 mt-2 w-48 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 p-3 shadow-xl">
-            <nav className="flex flex-col space-y-2">
-              <button
-                onClick={toggleVibration}
-                className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/10 transition-colors text-white text-left"
-              >
-                {vibrateEnabled ? <VibrationOnIcon /> : <VibrationOffIcon />}
-                <span className="text-sm">
-                  {vibrateEnabled ? "Выключить вибрацию" : "Включить вибрацию"}
-                </span>
-              </button>
-              <a href="#" className="text-white hover:text-purple-200 transition-colors text-sm font-medium py-2 px-3 rounded-lg hover:bg-white/10">
-                О проекте
-              </a>
-              <a href="#" className="text-white hover:text-purple-200 transition-colors text-sm font-medium py-2 px-3 rounded-lg hover:bg-white/10">
-                Помощь
-              </a>
-            </nav>
-          </div>
-        )}
-      </div>
-
       {/* Контент */}
       <main className="mx-auto max-w-6xl p-4 pb-[calc(120px+env(safe-area-inset-bottom,0px))]">
         {tab === "timer" && (
@@ -482,6 +443,45 @@ export default function App() {
           </section>
         )}
       </main>
+
+      {/* Бургер-меню слева снизу */}
+      <div
+        className={`fixed left-4 bottom-4 z-[60] transition-all duration-300 ${
+          burgerHidden ? "translate-y-14 opacity-0" : "translate-y-0 opacity-100"
+        }`}
+      >
+        <button
+          onClick={() => setMenuOpen((o) => !o)}
+          className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-full border-2 border-white/20 flex flex-col items-center justify-center gap-1.5 hover:bg-white/15 transition-all duration-300 hover:scale-105 shadow-lg"
+          aria-label="menu"
+        >
+          <div className={`w-5 h-0.5 bg-white rounded-full transition-all duration-300 ${menuOpen ? 'rotate-45 translate-y-1.5' : ''}`}></div>
+          <div className={`w-5 h-0.5 bg-white rounded-full transition-all duration-300 ${menuOpen ? 'opacity-0' : 'opacity-100'}`}></div>
+          <div className={`w-5 h-0.5 bg-white rounded-full transition-all duration-300 ${menuOpen ? '-rotate-45 -translate-y-1.5' : ''}`}></div>
+        </button>
+
+        {menuOpen && (
+          <div className="absolute left-0 bottom-14 mb-2 w-48 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 p-3 shadow-xl">
+            <nav className="flex flex-col space-y-2">
+              <button
+                onClick={toggleVibration}
+                className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/10 transition-colors text-white text-left"
+              >
+                {vibrateEnabled ? <VibrationOnIcon /> : <VibrationOffIcon />}
+                <span className="text-sm">
+                  {vibrateEnabled ? "Выключить вибрацию" : "Включить вибрацию"}
+                </span>
+              </button>
+              <a href="#" className="text-white hover:text-purple-200 transition-colors text-sm font-medium py-2 px-3 rounded-lg hover:bg-white/10">
+                О проекте
+              </a>
+              <a href="#" className="text-white hover:text-purple-200 transition-colors text-sm font-medium py-2 px-3 rounded-lg hover:bg-white/10">
+                Помощь
+              </a>
+            </nav>
+          </div>
+        )}
+      </div>
 
       {/* Островок — компактный, только иконки */}
       <BottomIsland tab={tab} onChange={switchTab} dir={blobDir} />
