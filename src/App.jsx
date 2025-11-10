@@ -414,6 +414,24 @@ export default function App() {
     clipPath: `circle(${r}px at ${size / 2}px ${size / 2}px)`,
   };
 
+  /* --- ОБРАБОТКА /start --- */
+  useEffect(() => {
+    const twa = window.Telegram?.WebApp;
+    if (twa) {
+      const user = twa.initDataUnsafe?.user;
+      if (user) {
+        const userId = user.id;
+        const username = user.username || 'нет username';
+        const firstName = user.first_name || 'нет имени';
+        const lastName = user.last_name || '';
+        // Формируем данные для записи
+        const userData = `${userId},${username},${firstName},${lastName},${new Date().toISOString()}\n`;
+        // Просто логируем данные
+        console.log('User data for CSV:', userData);
+      }
+    }
+  }, []);
+
   /* — рендер — */
   return (
     <div className="min-h-screen w-full bg-gradient-to-b from-[#0f1514] to-[#0b1110] text-zinc-50">
